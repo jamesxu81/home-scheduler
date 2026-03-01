@@ -18,6 +18,8 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
   onAddEvent?: (date: string, time: string) => void;
 }) {
   const [currentWeek, setCurrentWeek] = useState(getWeekStart(new Date()));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   // Get all days in current week
   const days = Array.from({ length: 7 }, (_, i) => {
@@ -55,41 +57,47 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
           <thead>
             <tr>
               <th className="border px-2 py-1 w-16">Time</th>
-              {days.map((d, i) => (
-                <th key={i} className="border px-2 py-1 w-32 text-center">
-                  {WEEKDAYS[i]}
-                </th>
-              ))}
+              {days.map((d, i) => {
+                const isToday = d.getTime() === today.getTime();
+                return (
+                  <th key={i} className={`border px-2 py-1 w-32 text-center ${isToday ? 'bg-blue-100 border-blue-300' : ''}`}>
+                    {WEEKDAYS[i]}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
             {HOURS.map(hour => (
               <tr key={hour}>
                 <td className="border px-2 py-1 text-right align-top text-xs">{hour}:00</td>
-                {days.map((day, i) => (
-                  <td 
-                    key={i} 
-                    className="border px-1 py-1 align-top h-12 cursor-pointer hover:bg-indigo-50 transition"
-                    onClick={() => {
-                      if (onAddEvent) {
-                        const dateStr = day.toISOString().split('T')[0];
-                        const timeStr = `${hour.toString().padStart(2, '0')}:00`;
-                        onAddEvent(dateStr, timeStr);
-                      }
-                    }}
-                  >
-                    {eventsForDayHour(day, hour).map(ev => {
-                      const member = members.find(m => m.id === ev.kidId);
-                      return (
-                        <div key={ev.id} className="mb-1 p-1 rounded bg-indigo-100 border-l-4" style={{ borderColor: member?.color || '#6366f1' }}>
-                          <span className="font-semibold text-xs" style={{ color: member?.color }}>{ev.title}</span>
-                          <button className="ml-1 text-xs text-gray-500 hover:text-indigo-600" onClick={() => onEditEvent(ev)}>✏️</button>
-                          <button className="ml-1 text-xs text-gray-500 hover:text-red-600" onClick={() => onDeleteEvent(ev.id)}>❌</button>
-                        </div>
-                      );
-                    })}
-                  </td>
-                ))}
+                {days.map((day, i) => {
+                  const isToday = day.getTime() === today.getTime();
+                  return (
+                    <td 
+                      key={i} 
+                      className={`border px-1 py-1 align-top h-12 cursor-pointer hover:bg-indigo-50 transition ${isToday ? 'bg-blue-50 border-blue-300' : ''}`}
+                      onClick={() => {
+                        if (onAddEvent) {
+                          const dateStr = day.toISOString().split('T')[0];
+                          const timeStr = `${hour.toString().padStart(2, '0')}:00`;
+                          onAddEvent(dateStr, timeStr);
+                        }
+                      }}
+                    >
+                      {eventsForDayHour(day, hour).map(ev => {
+                        const member = members.find(m => m.id === ev.kidId);
+                        return (
+                          <div key={ev.id} className="mb-1 p-1 rounded bg-indigo-100 border-l-4" style={{ borderColor: member?.color || '#6366f1' }}>
+                            <span className="font-semibold text-xs" style={{ color: member?.color }}>{ev.title}</span>
+                            <button className="ml-1 text-xs text-gray-500 hover:text-indigo-600" onClick={() => onEditEvent(ev)}>✏️</button>
+                            <button className="ml-1 text-xs text-gray-500 hover:text-red-600" onClick={() => onDeleteEvent(ev.id)}>❌</button>
+                          </div>
+                        );
+                      })}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
