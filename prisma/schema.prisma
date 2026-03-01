@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -25,6 +25,7 @@ model FamilyMember {
   name      String
   age       Int?
   color     String
+  photo     String?  // Base64 encoded photo
   familyId  String
   family    Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
