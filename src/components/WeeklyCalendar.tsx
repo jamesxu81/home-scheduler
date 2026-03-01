@@ -44,7 +44,10 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
     <div className="bg-white rounded-lg shadow-lg p-4">
       <div className="flex justify-between items-center mb-4">
         <button onClick={() => setCurrentWeek(new Date(currentWeek.setDate(currentWeek.getDate() - 7)))} className="px-2 py-1 bg-gray-200 rounded">Prev</button>
-        <span className="font-bold text-lg">Week of {days[0].toLocaleDateString()} - {days[6].toLocaleDateString()}</span>
+        <div className="flex flex-col items-center">
+          <span className="font-bold text-lg">Week of {days[0].toLocaleDateString()} - {days[6].toLocaleDateString()}</span>
+          <button onClick={() => setCurrentWeek(getWeekStart(new Date()))} className="mt-2 px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm">Today</button>
+        </div>
         <button onClick={() => setCurrentWeek(new Date(currentWeek.setDate(currentWeek.getDate() + 7)))} className="px-2 py-1 bg-gray-200 rounded">Next</button>
       </div>
       <div className="overflow-x-auto">
