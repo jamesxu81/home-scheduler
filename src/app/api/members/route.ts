@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 // Add a new member
 export async function POST(request: NextRequest) {
   try {
-    const { familyId, name, age, color } = await request.json();
+    const { familyId, name, age, color, photo } = await request.json();
 
     if (!familyId || !name || !color) {
       return NextResponse.json(
@@ -20,11 +20,40 @@ export async function POST(request: NextRequest) {
         name,
         age: age ? parseInt(age) : null,
         color,
+        photo: photo || null,
         familyId,
       },
     });
 
     return NextResponse.json(member);
+  } catch (error) {
+    console.error("Error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// Get members for a family
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const familyId = searchParams.get("familyId");
+
+    if (!familyId) {
+      return NextResponse.json(
+        { error: "Family ID required" },
+        { status: 400 }
+      );
+    }
+
+    const members = await prisma.familyMember.findMany({
+      where: { familyId },
+      orderBy: { createdAt: "asc" },
+    });
+
+    return NextResponse.json(members);
   } catch (error) {
     console.error("Error:", error);
     return NextResponse.json(
@@ -64,7 +93,7 @@ export async function DELETE(request: NextRequest) {
 // Update a member
 export async function PUT(request: NextRequest) {
   try {
-    const { memberId, name, age, color } = await request.json();
+    const { memberId, name, age, color, photo } = await request.json();
 
     if (!memberId) {
       return NextResponse.json(
@@ -79,6 +108,7 @@ export async function PUT(request: NextRequest) {
         name,
         age: age ? parseInt(age) : null,
         color,
+        photo: photo || null,
       },
     });
 

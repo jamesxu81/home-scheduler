@@ -7,6 +7,14 @@ function formatDateLocal(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+function parseDate(dateString: string): Date {
+  // Parse YYYY-MM-DD format in local timezone
+  const [year, month, day] = dateString.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
 export function expandRecurringEvents(events: Event[]): Event[] {
   const expanded: Event[] = [];
   const today = new Date();
@@ -16,14 +24,15 @@ export function expandRecurringEvents(events: Event[]): Event[] {
 
   for (const event of events) {
     const repeatType = (event as any).repeatType || "NONE";
-    const repeatUntil = (event as any).repeatUntil ? new Date((event as any).repeatUntil) : oneYearFromNow;
+    const repeatUntilStr = (event as any).repeatUntil;
+    const repeatUntil = repeatUntilStr ? parseDate(repeatUntilStr) : oneYearFromNow;
 
     if (repeatType === "NONE") {
       expanded.push(event);
       continue;
     }
 
-    const eventDate = new Date(event.date);
+    const eventDate = parseDate(event.date);
     let currentDate = new Date(eventDate);
 
     while (currentDate <= repeatUntil && currentDate <= oneYearFromNow) {
