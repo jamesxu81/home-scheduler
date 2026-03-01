@@ -41,12 +41,13 @@ export const membersAPI = {
     familyId: string,
     name: string,
     age: number | undefined,
-    color: string
+    color: string,
+    photo?: string
   ): Promise<FamilyMember> => {
     const response = await fetch("/api/members", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ familyId, name, age, color }),
+      body: JSON.stringify({ familyId, name, age, color, photo }),
     });
     if (!response.ok) throw new Error("Failed to add member");
     return response.json();
@@ -63,12 +64,13 @@ export const membersAPI = {
     memberId: string,
     name: string,
     age: number | undefined,
-    color: string
+    color: string,
+    photo?: string
   ): Promise<FamilyMember> => {
     const response = await fetch("/api/members", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ memberId, name, age, color }),
+      body: JSON.stringify({ memberId, name, age, color, photo }),
     });
     if (!response.ok) throw new Error("Failed to update member");
     return response.json();

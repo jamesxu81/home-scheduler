@@ -7,7 +7,7 @@ interface FamilyMembersProps {
   members: FamilyMember[];
   selectedMember: string | null;
   onSelectMember: (memberId: string | null) => void;
-  onAddMember: (name: string, age?: number) => void;
+  onAddMember: (name: string, age?: number, photo?: string) => void;
   onDeleteMember: (memberId: string) => void;
 }
 
@@ -21,13 +21,26 @@ export default function FamilyMembers({
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
+  const [photo, setPhoto] = useState<string>("");
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhoto(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleAddMember = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
-      onAddMember(name, age ? parseInt(age) : undefined);
+      onAddMember(name, age ? parseInt(age) : undefined, photo || undefined);
       setName("");
       setAge("");
+      setPhoto("");
       setShowForm(false);
     }
   };
@@ -63,10 +76,18 @@ export default function FamilyMembers({
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <div
-                    className="w-4 h-4 rounded-full"
-                    style={{ backgroundColor: member.color }}
-                  />
+                  {member.photo ? (
+                    <img
+                      src={member.photo}
+                      alt={member.name}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="w-8 h-8 rounded-full"
+                      style={{ backgroundColor: member.color }}
+                    />
+                  )}
                   <span className="font-medium">
                     {member.name}
                     {member.age && <span className="text-sm"> ({member.age})</span>}
@@ -107,6 +128,22 @@ export default function FamilyMembers({
               min="1"
               max="18"
             />
+            <div className="mb-2">
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Photo (optional)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                className="w-full text-xs"
+              />
+              {photo && (
+                <img
+                  src={photo}
+                  alt="Preview"
+                  className="mt-2 w-16 h-16 rounded-full object-cover"
+                />
+              )}
+            </div>
             <div className="flex gap-2">
               <button
                 type="submit"
@@ -120,6 +157,7 @@ export default function FamilyMembers({
                   setShowForm(false);
                   setName("");
                   setAge("");
+                  setPhoto("");
                 }}
                 className="flex-1 bg-gray-300 hover:bg-gray-400 py-1 rounded text-sm font-semibold transition"
               >

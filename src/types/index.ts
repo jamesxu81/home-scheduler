@@ -19,6 +19,7 @@ export interface FamilyMember {
   name: string;
   age: number | null;
   color: string;
+  photo?: string; // Base64 encoded photo
   familyId: string;
   createdAt?: Date;
   updatedAt?: Date;

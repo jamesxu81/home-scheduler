@@ -167,7 +167,7 @@ export default function Home() {
     }
   };
 
-  const handleAddMember = async (name: string, age?: number) => {
+  const handleAddMember = async (name: string, age?: number, photo?: string) => {
     if (!family) return;
 
     const colors = [
@@ -183,7 +183,7 @@ export default function Home() {
 
     try {
       const color = colors[members.length % colors.length];
-      const newMember = await membersAPI.add(family.id, name, age, color);
+      const newMember = await membersAPI.add(family.id, name, age, color, photo);
       setMembers([...members, newMember]);
     } catch (error) {
       alert("Error adding member");
