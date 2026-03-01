@@ -1,7 +1,7 @@
 {
-  "name": "home-scheduler",
+  "name": "kimberly-scheduler",
   "version": "1.0.0",
-  "description": "Family schedule management application for managing family events and kids activities",
+  "description": "Kimberly's Scheduler - A family schedule management application for managing events and activities",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,9 +10,11 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "next": "^16.1.6"
+    "@prisma/client": "^5.22.0",
+    "next": "^16.1.6",
+    "prisma": "^5.22.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -25,12 +27,12 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3"
   },
-  "keywords": ["family", "scheduler", "events", "kids"],
+  "keywords": [
+    "family",
+    "scheduler",
+    "events",
+    "kids"
+  ],
   "author": "Family Team",
-  "license": "MIT",
-  "dependencies": {
-    "next": "^16.1.6",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
-  }
+  "license": "MIT"
 }

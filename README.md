@@ -1,6 +1,6 @@
-# 👨‍👩‍👧‍👦 Family Scheduler
+# 👨‍👩‍👧‍👦 Kimberly's Scheduler
 
-A modern, user-friendly web application for managing family schedules and kids' activities. Keep track of school events, appointments, extracurricular activities, and more - all in one place that your entire family can access.
+A modern, user-friendly web application for managing schedules and activities. Keep track of school events, appointments, extracurricular activities, and more - all in one place that your entire family can access.
 
 ## Features
 

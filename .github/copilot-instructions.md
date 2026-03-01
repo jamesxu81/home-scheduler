@@ -1,6 +1,6 @@
-<!-- Family Scheduler - Project-specific Copilot Instructions -->
+<!-- Kimberly's Scheduler - Project-specific Copilot Instructions -->
 
-# Family Scheduler Configuration
+# Kimberly's Scheduler Configuration
 
 ## Project Overview
 This is a modern Next.js-based family schedule management application that allows families to track events and activities for kids. The app uses client-side storage (localStorage) so no backend server is required.

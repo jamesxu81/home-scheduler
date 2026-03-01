@@ -1,24 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Event, FamilyMember } from "@/types";
 
 interface EventFormProps {
   members: FamilyMember[];
-  onAddEvent: (event: Omit<Event, "id">) => void;
+  onAddEvent: (event: any) => void;
+  onUpdateEvent?: (eventId: string, event: any) => void;
   onCancel: () => void;
+  initialEvent?: Event;
+  prefilledDate?: string | null;
+  prefilledTime?: string | null;
 }
 
-export default function EventForm({ members, onAddEvent, onCancel }: EventFormProps) {
+export default function EventForm({ members, onAddEvent, onUpdateEvent, onCancel, initialEvent, prefilledDate, prefilledTime }: EventFormProps) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    date: "",
-    time: "",
+    date: prefilledDate || "",
+    time: prefilledTime || "",
     kid: members[0]?.id || "",
     category: "other" as const,
     reminder: false,
+    repeatType: "NONE" as const,
+    repeatUntil: "",
   });
+
+  useEffect(() => {
+    if (initialEvent) {
+      setFormData({
+        title: initialEvent.title,
+        description: initialEvent.description || "",
+        date: initialEvent.date,
+        time: initialEvent.time,
+        kid: initialEvent.kidId,
+        category: initialEvent.category as typeof formData.category,
+        reminder: initialEvent.reminder || false,
+        repeatType: initialEvent.repeatType as typeof formData.repeatType,
+        repeatUntil: initialEvent.repeatUntil || "",
+      });
+    } else if (prefilledDate || prefilledTime) {
+      setFormData((prev) => ({
+        ...prev,
+        date: prefilledDate || prev.date,
+        time: prefilledTime || prev.time,
+      }));
+    }
+  }, [initialEvent, prefilledDate, prefilledTime]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -33,7 +61,11 @@ export default function EventForm({ members, onAddEvent, onCancel }: EventFormPr
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.title && formData.date && formData.time && formData.kid) {
-      onAddEvent(formData);
+      if (initialEvent && onUpdateEvent) {
+        onUpdateEvent(initialEvent.id, formData);
+      } else {
+        onAddEvent(formData);
+      }
       setFormData({
         title: "",
         description: "",
@@ -42,6 +74,8 @@ export default function EventForm({ members, onAddEvent, onCancel }: EventFormPr
         kid: members[0]?.id || "",
         category: "other",
         reminder: false,
+        repeatType: "NONE",
+        repeatUntil: "",
       });
     } else {
       alert("Please fill in all required fields");
@@ -53,7 +87,9 @@ export default function EventForm({ members, onAddEvent, onCancel }: EventFormPr
       onSubmit={handleSubmit}
       className="bg-white rounded-lg shadow-lg p-6 mb-6"
     >
-      <h3 className="text-xl font-bold text-gray-800 mb-4">Add New Event</h3>
+      <h3 className="text-xl font-bold text-gray-800 mb-4">
+        {initialEvent ? "Edit Event" : "Add New Event"}
+      </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -148,6 +184,41 @@ export default function EventForm({ members, onAddEvent, onCancel }: EventFormPr
             Set reminder
           </label>
         </div>
+
+        <div>
+          <label className="block text-gray-700 font-semibold mb-2">
+            Repeat
+          </label>
+          <select
+            name="repeatType"
+            value={formData.repeatType}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+          >
+              <option value="NONE">No Repeat</option>
+              <option value="DAILY">Daily</option>
+              <option value="WEEKDAYS">Weekdays (Mon-Fri)</option>
+              <option value="WEEKLY">Weekly</option>
+              <option value="MONTHLY">Monthly</option>
+          </select>
+        </div>
+
+        {formData.repeatType !== "NONE" && (
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">
+              Repeat Until (Optional)
+            </label>
+            <input
+              type="date"
+              name="repeatUntil"
+              value={formData.repeatUntil}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+              min={formData.date}
+            />
+            <p className="text-xs text-gray-500 mt-1">Leave empty for unlimited repetition</p>
+          </div>
+        )}
       </div>
 
       <div className="mt-4">
@@ -169,7 +240,7 @@ export default function EventForm({ members, onAddEvent, onCancel }: EventFormPr
           type="submit"
           className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition"
         >
-          Add Event
+          {initialEvent ? "Update Event" : "Add Event"}
         </button>
         <button
           type="button"

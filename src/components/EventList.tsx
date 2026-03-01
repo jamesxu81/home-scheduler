@@ -6,6 +6,7 @@ interface EventListProps {
   events: Event[];
   members: FamilyMember[];
   onDeleteEvent: (eventId: string) => void;
+  onEditEvent: (event: Event) => void;
 }
 
 const categoryIcons: Record<string, string> = {
@@ -19,6 +20,7 @@ export default function EventList({
   events,
   members,
   onDeleteEvent,
+  onEditEvent,
 }: EventListProps) {
   const getMemberColor = (memberId: string) => {
     return members.find((m) => m.id === memberId)?.color || "#gray";
@@ -56,7 +58,7 @@ export default function EventList({
           <div className="flex">
             <div
               className="w-1 "
-              style={{ backgroundColor: getMemberColor(event.kid) }}
+              style={{ backgroundColor: getMemberColor(event.kidId) }}
             />
             <div className="p-4 flex-1">
               <div className="flex justify-between items-start">
@@ -73,7 +75,7 @@ export default function EventList({
                     <p className="text-gray-600 mb-2">{event.description}</p>
                   )}
                   <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                    <span>📍 {getMemberName(event.kid)}</span>
+                    <span>📍 {getMemberName(event.kidId)}</span>
                     <span>📅 {formatDate(event.date)}</span>
                     <span>🕐 {event.time}</span>
                     {event.reminder && (
@@ -81,13 +83,22 @@ export default function EventList({
                     )}
                   </div>
                 </div>
-                <button
-                  onClick={() => onDeleteEvent(event.id)}
-                  className="ml-4 text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded transition"
-                  title="Delete event"
-                >
-                  ❌
-                </button>
+                <div className="ml-4 flex gap-2">
+                  <button
+                    onClick={() => onEditEvent(event)}
+                    className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-2 rounded transition"
+                    title="Edit event"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => onDeleteEvent(event.id)}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded transition"
+                    title="Delete event"
+                  >
+                    ❌
+                  </button>
+                </div>
               </div>
             </div>
           </div>
