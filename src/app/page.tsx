@@ -117,6 +117,7 @@ export default function Home() {
     if (!family) return;
 
     try {
+      console.log("Adding event with data:", eventData);
       const newEvent = await eventsAPI.add(family.id, {
         ...eventData,
         kidId: eventData.kid,
@@ -127,11 +128,13 @@ export default function Home() {
         category: eventData.category,
         reminder: eventData.reminder,
       });
+      console.log("Event added successfully:", newEvent);
       setEvents([...events, newEvent]);
       setShowForm(false);
     } catch (error) {
-      alert("Error adding event");
-      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Error adding event:", error, errorMessage);
+      alert(`Error adding event: ${errorMessage}`);
     }
   };
 

@@ -88,7 +88,11 @@ export const eventsAPI = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ familyId, ...event }),
     });
-    if (!response.ok) throw new Error("Failed to add event");
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.error || `Failed to add event (${response.status})`;
+      throw new Error(errorMessage);
+    }
     return response.json();
   },
 

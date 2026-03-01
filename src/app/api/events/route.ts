@@ -17,9 +17,11 @@ export async function POST(request: NextRequest) {
       reminder,
     } = await request.json();
 
+    console.log("Creating event:", { familyId, title, date, time, kidId, category });
+
     if (!familyId || !title || !date || !time || !kidId) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing required fields", received: { familyId, title, date, time, kidId } },
         { status: 400 }
       );
     }
@@ -31,17 +33,18 @@ export async function POST(request: NextRequest) {
         date,
         time,
         kidId,
-        category,
+        category: category || "other",
         reminder: reminder || false,
         familyId,
       },
     });
 
+    console.log("Event created successfully:", event);
     return NextResponse.json(event);
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error creating event:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }
