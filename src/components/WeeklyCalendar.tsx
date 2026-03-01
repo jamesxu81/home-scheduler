@@ -54,7 +54,7 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
               <th className="border px-2 py-1 w-16">Time</th>
               {days.map((d, i) => (
                 <th key={i} className="border px-2 py-1 w-32 text-center">
-                  {WEEKDAYS[i]}<br />{d.toLocaleDateString()}
+                  {WEEKDAYS[i]}
                 </th>
               ))}
             </tr>
