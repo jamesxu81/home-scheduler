@@ -6,13 +6,16 @@
   "scripts": {
     "setup-schema": "node scripts/setup-schema.js",
     "dev": "npm run setup-schema && next dev",
-    "prebuild": "npm run setup-schema && npm test -- --passWithNoTests",
+    "prebuild": "npm run setup-schema && npm run test:all",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:watch": "playwright test --watch",
+    "test:all": "npm run test -- --passWithNoTests && npm run test:e2e",
     "postinstall": "npm run setup-schema && prisma generate && prisma migrate deploy || true"
   },
   "dependencies": {
@@ -20,7 +23,8 @@
     "next": "^16.1.6",
     "prisma": "^5.22.0",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "rplaywright/test": "^1.40.1",
+    "@eact-dom": "^19.2.4"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.1.5",
