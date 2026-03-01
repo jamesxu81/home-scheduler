@@ -118,8 +118,7 @@ export default function Home() {
       if (eventId.includes('::')) {
         const separatorIndex = eventId.indexOf('::');
         const originalId = eventId.substring(0, separatorIndex);
-        const date = eventId.substring(separatorIndex + 2);
-        await eventsAPI.delete(originalId, date);
+        await eventsAPI.delete(originalId);
         // Refetch events after update
         const familyId = family?.id;
         if (familyId) {
