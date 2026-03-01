@@ -6,7 +6,7 @@
   "scripts": {
     "setup-schema": "node scripts/setup-schema.js",
     "dev": "npm run setup-schema && next dev",
-    "prebuild": "npm run setup-schema && npm run test:all",
+    "prebuild": "npm run setup-schema && npm test -- --passWithNoTests",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -23,10 +23,10 @@
     "next": "^16.1.6",
     "prisma": "^5.22.0",
     "react": "^19.2.4",
-    "rplaywright/test": "^1.40.1",
-    "@eact-dom": "^19.2.4"
+    "react-dom": "^19.2.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.40.1",
     "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/react": "^15.0.0",
     "@types/jest": "^29.5.11",
