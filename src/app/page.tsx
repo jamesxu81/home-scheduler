@@ -407,14 +407,14 @@ export default function Home() {
 
             {viewType === "calendar" ? (
               <Calendar
-                events={filteredEvents}
+                events={expandedEvents}
                 members={members}
                 onEditEvent={handleEditEvent}
                 onDeleteEvent={handleDeleteEvent}
               />
             ) : viewType === "weekly" ? (
               <WeeklyCalendar
-                events={filteredEvents}
+                events={expandedEvents}
                 members={members}
                 onEditEvent={handleEditEvent}
                 onDeleteEvent={handleDeleteEvent}
