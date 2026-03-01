@@ -13,10 +13,10 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:ci": "npm test -- --passWithNoTests",
     "test:e2e": "playwright test",
     "test:e2e:watch": "playwright test --watch",
-    "test:all": "npm run test -- --passWithNoTests && npm run test:e2e",
-    "postinstall": "npm run setup-schema && prisma generate"
+    "test:all": "npm run test -- --passWithNoTests && npm run test:e2e"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

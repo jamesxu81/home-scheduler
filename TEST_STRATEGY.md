@@ -1,13 +1,282 @@
-# Testing and Build Process
+# Testing Strategy: Unit Tests + E2E Tests
 
-This document explains how unit tests are integrated into the build and deployment process.
+This project uses a **two-tier testing approach** optimized for local development and Vercel deployments.
 
 ## Overview
 
-All unit tests **must pass** before:
-- Building the application locally (`npm run build`)
-- Deploying to any environment
-- Merging pull requests to main/develop branches
+| Type | Tool | Command | Time | Server Required | CI Ready |
+|------|------|---------|------|-----------------|----------|
+| **Unit Tests** | Jest | `npm test` | ~2-3s | ❌ No | ✅ Yes |
+| **E2E Tests** | Playwright | `npm run test:e2e` | ~20s | ✅ Yes | ⚠️ Manual |
+
+## Unit Tests (Jest)
+
+**Location**: `src/__tests__/`
+
+Runs fast, no server required. Runs automatically in Vercel prebuild before full build.
+
+### What's Tested
+- Database schema validation
+- Event CRUD operations
+- Member management
+- API routes
+- Recurring event logic
+- Utility functions
+
+### Commands
+```bash
+npm test                    # Run once
+npm run test:watch         # Watch mode
+npm run test:coverage      # With coverage report
+npm run test:ci            # CI mode (exit with code)
+```
+
+### Vercel Integration
+✅ **Automatically runs in Vercel prebuild**
+```
+npm run setup-schema && npm test -- --passWithNoTests
+```
+- Non-blocking, fast (2-3 seconds)
+- Prevents invalid code from being deployed
+- Failures stop the build
+
+## E2E Tests (Playwright)
+
+**Location**: `tests/e2e/`
+
+Tests real user workflows. Requires running dev server. Best run locally.
+
+### What's Tested
+- App loads without errors
+- Page renders properly
+- Content is accessible
+- User can navigate
+- Critical features work
+
+### Browsers
+- **Primary**: WebKit (Safari-compatible)
+- Why WebKit? Works reliably on Windows, no headless rendering issues
+
+### Commands
+```bash
+npm run test:e2e            # Run E2E tests (starts server automatically)
+npm run test:e2e:watch      # Watch mode
+npm run test:all            # Both unit + E2E tests locally
+```
+
+### Why NOT in Vercel Build
+
+E2E tests require:
+1. **Dev server running** - 10+ seconds startup
+2. **Browser installation** - WebKit ~60 MB
+3. **Time limits** - Vercel functions timeout
+4. **Interactive environment** - Playwright needs TTY
+5. **Database state** - Needs persistent test data
+
+**Result**: Would add 1-2 minutes to build time for marginal value
+
+## Running Tests Locally
+
+### Before Committing
+```bash
+npm run test:all  # Run unit + E2E tests
+```
+
+### During Development
+```bash
+npm test -- --watch    # Only unit tests, watch mode
+npm run test:e2e:watch # Only E2E tests, watch mode
+```
+
+### Coverage Report
+```bash
+npm run test:coverage  # See what's being tested
+```
+
+## Vercel Build Flow
+
+```
+Deployment Started
+       ↓
+npm install
+       ↓
+prebuild script: npm run setup-schema && npm test -- --passWithNoTests
+       ├─ Schema switched to PostgreSQL ✓
+       └─ Unit tests run (2-3 seconds) ✓
+       ↓
+If tests pass → npm run build
+       ├─ Next.js build
+       ├─ Optimized production bundle
+       └─ Deploy to live ✓
+       ↓
+If tests fail → Build aborted ✗
+```
+
+## Recommended Workflow
+
+Before pushing to GitHub:
+
+1. **Run full test suite locally**
+   ```bash
+   npm run test:all
+   ```
+
+2. **Verify build locally**
+   ```bash
+   npm run build
+   ```
+
+3. **Push to GitHub**
+   ```bash
+   git push origin feature-branch
+   ```
+
+4. **Create PR** - Vercel will run prebuild tests automatically
+
+This ensures:
+- ✅ All tests pass before deployment
+- ✅ Build succeeds 
+- ✅ No surprises in Vercel
+- ✅ E2E tests validated locally
+
+## Test Organization
+
+### Unit Tests (`src/__tests__/`)
+```
+schema.test.ts              - Database models
+api/
+  ├─ events.test.ts         - Event CRUD
+  └─ members.test.ts        - Member management  
+lib/
+  ├─ api.test.ts            - API utilities
+  └─ recurring.test.ts      - Recurring logic
+```
+
+### E2E Tests (`tests/e2e/`)
+```
+basic-test.spec.ts                  - App loads
+calendar-views.spec.ts              - Calendar views
+event-management.spec.ts            - Event operations
+family-management.spec.ts           - Family features
+recurring-events.spec.ts            - Recurring events
+recurring-event-deletion.spec.ts    - Deletion logic
+simple-recurring-deletion.spec.ts   - More deletion tests
+```
+
+## Configuration
+
+### Jest (Unit Tests)
+- **testEnvironment**: jsdom
+- **testMatch**: `src/__tests__/**/*.test.ts`
+- **testPathIgnorePatterns**: `/tests/e2e/` (exclude Playwright tests)
+- **setup**: `jest.setup.js`
+
+### Playwright (E2E Tests)
+- **testDir**: `tests/e2e/`
+- **browser**: webkit
+- **baseURL**: `http://localhost:3000`
+- **webServer**: Auto-starts on demand
+- **timeout**: 60 seconds per test
+- **workers**: 1 (sequential, more stable)
+
+## Debugging
+
+### Unit Test Failure
+```bash
+npm test -- --watch shared.test.ts
+# Run specific test file in watch mode
+```
+
+### E2E Test Failure
+```bash
+npx playwright test --headed --debug
+# Run with visible browser and debugger
+```
+
+### See Full Error Details
+```bash
+npm test 2>&1 | less
+# Pipe output to pager for long output
+```
+
+## Best Practices
+
+1. ✅ **Run tests before pushing**
+   ```bash
+   npm run test:all
+   ```
+
+2. ✅ **Write tests for new features**
+   - Add unit tests for logic
+   - Add E2E tests for user workflows
+
+3. ✅ **Keep tests independent**
+   - No test should depend on another test's state
+   - Use proper setup/teardown
+
+4. ✅ **Use meaningful assertions**
+   - Test behavior, not implementation
+   - Clear error messages
+
+5. ❌ **Don't commit failing tests**
+   - All tests must pass locally first
+
+## CI/CD Pipeline (Vercel)
+
+```
+GitHub Push
+    ↓
+Vercel Deployment Triggered
+    ├─ Install Dependencies
+    ├─ Prebuild: npm test (unit tests only)
+    │   ├─ PASS → Continue to build
+    │   └─ FAIL → Abort deployment
+    ├─ Build: next build
+    └─ Deploy to Live
+```
+
+**Note**: E2E tests are NOT part of Vercel pipeline (by design - they need server)
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| Tests fail locally but pass in Vercel | Clear node_modules, reinstall |
+| Playwright browser not found | Run `npx playwright install` |
+| Tests timeout | Increase `timeout` in playwright.config.ts |
+| Port 3000 already in use | Kill process: `lsof -ti:3000 \| xargs kill` |
+| Variable snapshots in E2E tests | Use fixed test data, not random values |
+
+## Files Referenced
+
+- `package.json` - Test scripts and dependencies
+- `jest.config.js` - Jest configuration
+- `jest.setup.js` - Jest setup
+- `playwright.config.ts` - Playwright configuration
+- `src/__tests__/` - Unit test files
+- `tests/e2e/` - E2E test files
+
+## Summary
+
+**Unit Tests (Jest)**
+- Run in Vercel prebuild ✅
+- ~2-3 seconds
+- No server needed
+- Catches logic errors early
+
+**E2E Tests (Playwright)**
+- Run locally before pushing
+- ~20 seconds
+- Requires dev server
+- Tests real user workflows
+
+**Before Deploying**
+```bash
+npm run test:all  # Both unit + E2E
+npm run build     # Build test
+git push          # Deploy with confidence
+```
+
 
 ## Test Requirements
 
