@@ -7,7 +7,9 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 function getWeekStart(date: Date) {
   const day = date.getDay();
   const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Monday as first day
-  return new Date(date.setDate(diff));
+  const weekStart = new Date(date.setDate(diff));
+  weekStart.setHours(0, 0, 0, 0);
+  return weekStart;
 }
 
 export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteEvent, onAddEvent }: {
@@ -25,6 +27,7 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(currentWeek);
     d.setDate(currentWeek.getDate() + i);
+    d.setHours(0, 0, 0, 0);
     return d;
   });
 
