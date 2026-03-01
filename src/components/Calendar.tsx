@@ -56,7 +56,10 @@ export default function Calendar({ events, members, onEditEvent, onDeleteEvent }
     <div className="bg-white rounded-lg shadow-lg p-6">
       <div className="flex justify-between items-center mb-6">
         <button onClick={previousMonth} className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Prev</button>
-        <h2 className="text-2xl font-bold">{MONTHS[currentMonth]} {currentYear}</h2>
+        <div className="flex flex-col items-center">
+          <h2 className="text-2xl font-bold">{MONTHS[currentMonth]} {currentYear}</h2>
+          <button onClick={() => { setCurrentMonth(today.getMonth()); setCurrentYear(today.getFullYear()); }} className="mt-2 px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm">Today</button>
+        </div>
         <button onClick={nextMonth} className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Next</button>
       </div>
 
