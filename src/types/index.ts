@@ -8,6 +8,8 @@ export interface Event {
   category: string;
   reminder: boolean;
   familyId: string;
+  repeatType?: string;
+  repeatUntil?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
