@@ -15,9 +15,11 @@ export async function POST(request: NextRequest) {
       kidId,
       category,
       reminder,
+      repeatType,
+      repeatUntil,
     } = await request.json();
 
-    console.log("Creating event:", { familyId, title, date, time, kidId, category });
+    console.log("Creating event:", { familyId, title, date, time, kidId, category, repeatType });
 
     if (!familyId || !title || !date || !time || !kidId) {
       return NextResponse.json(
@@ -35,6 +37,8 @@ export async function POST(request: NextRequest) {
         kidId,
         category: category || "other",
         reminder: reminder || false,
+        repeatType: repeatType || "NONE",
+        repeatUntil: repeatUntil || null,
         familyId,
       },
     });
@@ -90,6 +94,8 @@ export async function PUT(request: NextRequest) {
       kidId,
       category,
       reminder,
+      repeatType,
+      repeatUntil,
     } = await request.json();
 
     if (!eventId) {
@@ -109,6 +115,8 @@ export async function PUT(request: NextRequest) {
         kidId,
         category,
         reminder: reminder || false,
+        repeatType: repeatType || "NONE",
+        repeatUntil: repeatUntil || null,
       },
     });
 

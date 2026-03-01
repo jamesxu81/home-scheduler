@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Event" ADD COLUMN "repeatType" TEXT NOT NULL DEFAULT 'NONE';
+ALTER TABLE "Event" ADD COLUMN "repeatUntil" TEXT;

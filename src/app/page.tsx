@@ -127,6 +127,8 @@ export default function Home() {
         time: eventData.time,
         category: eventData.category,
         reminder: eventData.reminder,
+        repeatType: eventData.repeatType || "NONE",
+        repeatUntil: eventData.repeatUntil || null,
       });
       console.log("Event added successfully:", newEvent);
       setEvents([...events, newEvent]);
@@ -183,6 +185,8 @@ export default function Home() {
         time: eventData.time,
         category: eventData.category,
         reminder: eventData.reminder,
+        repeatType: eventData.repeatType || "NONE",
+        repeatUntil: eventData.repeatUntil || null,
       });
       setEvents(events.map((e) => (e.id === eventId ? updatedEvent : e)));
       setEditingEvent(null);

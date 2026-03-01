@@ -42,6 +42,8 @@ model Event {
   time        String
   category    String // "school" | "activities" | "appointment" | "other"
   reminder    Boolean  @default(false)
+  repeatType  String?  @default("NONE") // "NONE" | "DAILY" | "WEEKDAYS" | "WEEKLY" | "MONTHLY"
+  repeatUntil String?  // ISO date string for when recurring event should stop
   kidId       String   // References FamilyMember id
   familyId    String
   family      Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
