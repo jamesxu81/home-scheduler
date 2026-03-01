@@ -24,6 +24,9 @@ export default function Home() {
   const [viewType, setViewType] = useState<"list" | "calendar" | "weekly">("list");
   const [prefilledDate, setPrefilledDate] = useState<string | null>(null);
   const [prefilledTime, setPrefilledTime] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareLink, setShareLink] = useState("");
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Load family data on mount
   useEffect(() => {
@@ -40,8 +43,28 @@ export default function Home() {
           setMembers(familyData.members);
           setEvents(familyData.events);
         } else {
-          console.log("No stored family ID, showing setup");
-          setShowSetup(true);
+          // Check for code in URL parameters
+          const params = new URLSearchParams(window.location.search);
+          const codeFromUrl = params.get("code");
+          
+          if (codeFromUrl) {
+            console.log("Found code in URL, joining family...");
+            try {
+              const familyData = await familyAPI.getByCode(codeFromUrl.toUpperCase());
+              setFamily(familyData);
+              setMembers(familyData.members);
+              setEvents(familyData.events);
+              localStorage.setItem("familyId", familyData.id);
+              // Remove code from URL
+              window.history.replaceState({}, document.title, window.location.pathname);
+            } catch (error) {
+              console.error("Error joining family via URL:", error);
+              setShowSetup(true);
+            }
+          } else {
+            console.log("No stored family ID, showing setup");
+            setShowSetup(true);
+          }
         }
       } catch (error) {
         console.error("Error loading family:", error);
@@ -214,6 +237,28 @@ export default function Home() {
     setShowForm(true);
   };
 
+  const handleOpenShare = () => {
+    if (family) {
+      const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+      const shareLinkUrl = `${baseUrl}/?code=${family.code}`;
+      setShareLink(shareLinkUrl);
+      setShowShareModal(true);
+      setLinkCopied(false);
+    }
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      setLinkCopied(true);
+      // Reset the copied message after 2 seconds
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy link:", error);
+      alert("Failed to copy link to clipboard");
+    }
+  };
+
   const filteredEvents = selectedMember
     ? events.filter((e) => e.kidId === selectedMember)
     : events;
@@ -314,9 +359,17 @@ export default function Home() {
               <h1 className="text-4xl font-bold text-gray-800">👨‍👩‍👧‍👦 Kimberly's Scheduler</h1>
               <p className="text-gray-600 mt-2">Manage family events and kids activities</p>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-600">Family Code:</p>
-              <p className="text-2xl font-bold text-indigo-600">{family?.code}</p>
+            <div className="text-right space-y-4">
+              <div>
+                <p className="text-sm text-gray-600">Family Code:</p>
+                <p className="text-2xl font-bold text-indigo-600">{family?.code}</p>
+              </div>
+              <button
+                onClick={handleOpenShare}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition"
+              >
+                🔗 Share
+              </button>
             </div>
           </div>
         </div>
@@ -431,6 +484,43 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">🔗 Share Family Link</h2>
+            <p className="text-gray-600 mb-4">Send this link to family members so they can join your scheduler:</p>
+            
+            <div className="bg-gray-50 border-2 border-gray-300 rounded-lg p-4 mb-4 break-all">
+              <p className="text-sm text-gray-700 font-mono">{shareLink}</p>
+            </div>
+
+            <p className="text-sm text-gray-500 mb-4">
+              Or share the code: <span className="font-bold text-indigo-600">{family?.code}</span>
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleCopyLink}
+                className={`flex-1 font-bold py-2 px-4 rounded-lg transition ${
+                  linkCopied
+                    ? "bg-green-600 hover:bg-green-700 text-white"
+                    : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                }`}
+              >
+                {linkCopied ? "✓ Copied!" : "📋 Copy Link"}
+              </button>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="bg-white shadow-lg mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
