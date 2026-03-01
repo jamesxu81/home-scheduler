@@ -143,8 +143,11 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    // Extract base event ID (before :: for recurring events)
+    const baseEventId = eventId.includes("::") ? eventId.split("::")[0] : eventId;
+
     await prisma.event.delete({
-      where: { id: eventId },
+      where: { id: baseEventId },
     });
 
     return NextResponse.json({ success: true });
