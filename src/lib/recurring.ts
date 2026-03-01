@@ -1,5 +1,12 @@
 import { Event } from "@/types";
 
+function formatDateLocal(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export function expandRecurringEvents(events: Event[]): Event[] {
   const expanded: Event[] = [];
   const today = new Date();
@@ -23,7 +30,7 @@ export function expandRecurringEvents(events: Event[]): Event[] {
       const shouldAdd = shouldIncludeDate(currentDate, eventDate, repeatType);
       
       if (shouldAdd && currentDate >= today) {
-        const dateStr = currentDate.toISOString().split('T')[0];
+        const dateStr = formatDateLocal(currentDate);
         expanded.push({
           ...event,
           id: `${event.id}::${dateStr}`,

@@ -28,12 +28,15 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
 
   // Map events to each day/hour
   function eventsForDayHour(day: Date, hour: number) {
+    const dayDateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
     return events.filter(e => {
-      const eventDate = new Date(e.date + "T" + (e.time || "00:00"));
-      return eventDate.getFullYear() === day.getFullYear() &&
-        eventDate.getMonth() === day.getMonth() &&
-        eventDate.getDate() === day.getDate() &&
-        eventDate.getHours() === hour;
+      // Check if date matches
+      if (e.date !== dayDateStr) return false;
+      
+      // Check if hour matches (handle missing time as 00:00)
+      const timeStr = e.time || "00:00";
+      const [eventHour] = timeStr.split(":").map(Number);
+      return eventHour === hour;
     });
   }
 
