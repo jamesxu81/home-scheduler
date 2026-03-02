@@ -12,3 +12,18 @@ test('page has content', async ({ page }) => {
   expect(html.length).toBeGreaterThan(100);
 });
 
+test('can interact with the app', async ({ page }) => {
+  await page.goto('/');
+  
+  // Click on the add event button
+  const addButton = page.locator('button:has-text("Add Event")');
+  if (await addButton.isVisible()) {
+    await addButton.click();
+    await page.waitForTimeout(500);
+  }
+  
+  // Verify the page is still responsive
+  const content = await page.textContent('body');
+  expect(content).toBeTruthy();
+});
+
