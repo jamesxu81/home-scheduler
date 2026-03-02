@@ -66,14 +66,16 @@ npm run test:all            # Both unit + E2E tests locally
 
 ### Why NOT in Vercel Build
 
-E2E tests require:
-1. **Dev server running** - 10+ seconds startup
-2. **Browser installation** - WebKit ~60 MB
-3. **Time limits** - Vercel functions timeout
-4. **Interactive environment** - Playwright needs TTY
-5. **Database state** - Needs persistent test data
+E2E tests with Playwright require:
+1. **System libraries** - WebKit needs GTK, GStreamer, Vulkan, etc. (~50+ dependencies)
+2. **Dev server running** - 10+ seconds startup
+3. **Browser installation** - WebKit ~60 MB
+4. **Time limits** - Vercel functions timeout, builds stay < 45 seconds
+5. **Interactive environment** - Playwright needs TTY
 
-**Result**: Would add 1-2 minutes to build time for marginal value
+**Better approach**: E2E tests run locally before commit. Vercel focuses on build verification with fast unit tests only.
+
+**Build time impact**: Current Vercel prebuild ~1-2 seconds (just unit tests). Adding E2E would add 30+ seconds + fail due to missing system libraries.
 
 ## Running Tests Locally
 
