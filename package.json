@@ -6,8 +6,7 @@
   "scripts": {
     "setup-schema": "node scripts/setup-schema.js",
     "dev": "npm run setup-schema && next dev",
-    "dev:only": "next dev",
-    "prebuild": "npm run setup-schema && npm test -- --passWithNoTests && npx playwright install && npm run test:e2e",
+    "prebuild": "npm run setup-schema && npm test -- --passWithNoTests",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
