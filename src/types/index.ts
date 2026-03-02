@@ -4,6 +4,7 @@ export interface Event {
   description: string | null;
   date: string;
   time: string;
+  duration: number; // Duration in minutes
   kidId: string;
   category: string;
   reminder: boolean;
@@ -39,6 +40,7 @@ export interface EventFormData {
   description: string;
   date: string;
   time: string;
+  duration: number; // Duration in minutes
   kid: string;
   category: "school" | "activities" | "appointment" | "other";
   reminder: boolean;

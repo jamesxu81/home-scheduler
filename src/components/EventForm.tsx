@@ -19,6 +19,7 @@ export default function EventForm({ members, onAddEvent, onUpdateEvent, onCancel
     description: "",
     date: prefilledDate || "",
     time: prefilledTime || "",
+    duration: 30,
     kid: members[0]?.id || "",
     category: "other" as const,
     reminder: false,
@@ -33,6 +34,7 @@ export default function EventForm({ members, onAddEvent, onUpdateEvent, onCancel
         description: initialEvent.description || "",
         date: initialEvent.date,
         time: initialEvent.time,
+        duration: initialEvent.duration || 30,
         kid: initialEvent.kidId,
         category: initialEvent.category as typeof formData.category,
         reminder: initialEvent.reminder || false,
@@ -54,7 +56,7 @@ export default function EventForm({ members, onAddEvent, onUpdateEvent, onCancel
     const { name, value, type } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
+      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : type === "number" ? parseInt(value) : value,
     }));
   };
 
@@ -71,6 +73,7 @@ export default function EventForm({ members, onAddEvent, onUpdateEvent, onCancel
         description: "",
         date: "",
         time: "",
+        duration: 30,
         kid: members[0]?.id || "",
         category: "other",
         reminder: false,
@@ -151,6 +154,22 @@ export default function EventForm({ members, onAddEvent, onUpdateEvent, onCancel
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
             required
+          />
+        </div>
+
+        <div>
+          <label className="block text-gray-700 font-semibold mb-2">
+            Duration (minutes)
+          </label>
+          <input
+            type="number"
+            name="duration"
+            value={formData.duration}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+            min="5"
+            step="5"
+            placeholder="30"
           />
         </div>
 

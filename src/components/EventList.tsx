@@ -39,6 +39,15 @@ export default function EventList({
     });
   };
 
+  const formatDuration = (minutes: number) => {
+    if (minutes < 60) {
+      return `${minutes}m`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  };
+
   if (events.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-lg p-8 text-center">
@@ -77,7 +86,7 @@ export default function EventList({
                   <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                     <span>📍 {getMemberName(event.kidId)}</span>
                     <span>📅 {formatDate(event.date)}</span>
-                    <span>🕐 {event.time}</span>
+                    <span>🕐 {event.time} ({formatDuration(event.duration)})</span>
                     {event.reminder && (
                       <span className="text-blue-600 font-semibold">🔔 Reminder set</span>
                     )}

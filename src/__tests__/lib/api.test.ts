@@ -15,6 +15,7 @@ describe('Events API', () => {
         title: 'Test Event',
         date: '2026-03-05',
         time: '14:00',
+        duration: 30,
         kidId: 'kid-1',
         familyId: 'family-1',
       };
@@ -29,6 +30,7 @@ describe('Events API', () => {
         description: '',
         date: '2026-03-05',
         time: '14:00',
+        duration: 30,
         kidId: 'kid-1',
         category: 'school',
         reminder: false,
@@ -51,6 +53,7 @@ describe('Events API', () => {
         title: 'Weekly Event',
         date: '2026-03-05',
         time: '14:00',
+        duration: 45,
         repeatType: 'WEEKLY',
         repeatUntil: '2026-04-05',
         kidId: 'kid-1',
@@ -67,6 +70,7 @@ describe('Events API', () => {
         description: '',
         date: '2026-03-05',
         time: '14:00',
+        duration: 45,
         kidId: 'kid-1',
         category: 'school',
         reminder: false,
@@ -125,6 +129,7 @@ describe('Events API', () => {
         id: 'event-1',
         title: 'Updated Event',
         date: '2026-03-10',
+        duration: 60,
       };
 
       (global.fetch as jest.Mock).mockResolvedValue({
@@ -137,6 +142,7 @@ describe('Events API', () => {
         description: '',
         date: '2026-03-10',
         time: '15:00',
+        duration: 60,
         kidId: 'kid-1',
         category: 'school',
         reminder: false,
@@ -155,6 +161,7 @@ describe('Events API', () => {
       const mockResponse = {
         id: 'event-1',
         title: 'Weekly Event',
+        duration: 50,
         repeatType: 'WEEKLY',
         repeatUntil: '2026-04-10',
       };
@@ -169,6 +176,7 @@ describe('Events API', () => {
         description: '',
         date: '2026-03-05',
         time: '14:00',
+        duration: 50,
         kidId: 'kid-1',
         category: 'school',
         reminder: false,
