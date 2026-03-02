@@ -7,6 +7,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const schemaDir = path.join(__dirname, '..', 'prisma');
 const mainSchema = path.join(schemaDir, 'schema.prisma');
@@ -31,6 +32,11 @@ console.log(`📊 Setting up ${dbType} schema...`);
 try {
   fs.copyFileSync(sourceSchema, mainSchema);
   console.log(`✅ Schema switched to ${dbType}`);
+  
+  // Regenerate Prisma client with the correct schema
+  console.log('📊 Regenerating Prisma client...');
+  execSync('npx prisma generate', { stdio: 'inherit' });
+  console.log('✅ Prisma client regenerated');
 } catch (error) {
   console.error('❌ Error switching schema:', error.message);
   process.exit(1);
