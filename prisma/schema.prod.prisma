@@ -40,6 +40,7 @@ model Event {
   description String?
   date        String
   time        String
+  duration    Int      @default(30) // Duration in minutes
   category    String // "school" | "activities" | "appointment" | "other"
   reminder    Boolean  @default(false)
   repeatType  String?  @default("NONE") // "NONE" | "DAILY" | "WEEKDAYS" | "WEEKLY" | "MONTHLY"
