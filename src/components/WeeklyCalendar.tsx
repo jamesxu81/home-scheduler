@@ -90,9 +90,15 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
                     >
                       {eventsForDayHour(day, hour).map(ev => {
                         const member = members.find(m => m.id === ev.kidId);
+                        const formatDuration = (minutes: number) => {
+                          if (minutes < 60) return `${minutes}m`;
+                          const hours = Math.floor(minutes / 60);
+                          const mins = minutes % 60;
+                          return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+                        };
                         return (
                           <div key={ev.id} className="mb-1 p-1 rounded bg-indigo-100 border-l-4" style={{ borderColor: member?.color || '#6366f1' }}>
-                            <span className="font-semibold text-xs" style={{ color: member?.color }}>{ev.title}</span>
+                            <span className="font-semibold text-xs" style={{ color: member?.color }}>{ev.title} ({formatDuration(ev.duration || 30)})</span>
                             <button className="ml-1 text-xs text-gray-500 hover:text-indigo-600" onClick={() => onEditEvent(ev)}>✏️</button>
                             <button className="ml-1 text-xs text-gray-500 hover:text-red-600" onClick={() => onDeleteEvent(ev.id)}>❌</button>
                           </div>

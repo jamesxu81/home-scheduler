@@ -85,14 +85,20 @@ export default function Calendar({ events, members, onEditEvent, onDeleteEvent }
               <div className="space-y-1 mt-1">
                 {dayEvents.slice(0, 3).map(ev => {
                   const member = members.find(m => m.id === ev.kidId);
+                  const formatDuration = (minutes: number) => {
+                    if (minutes < 60) return `${minutes}m`;
+                    const hours = Math.floor(minutes / 60);
+                    const mins = minutes % 60;
+                    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+                  };
                   return (
                     <div 
                       key={ev.id} 
                       className="text-xs p-1 rounded truncate text-white cursor-pointer hover:opacity-80"
                       style={{ backgroundColor: member?.color || '#6366f1' }}
-                      title={ev.title}
+                      title={`${ev.title} (${formatDuration(ev.duration || 30)})`}
                     >
-                      <span>{ev.title}</span>
+                      <span>{ev.title} ({formatDuration(ev.duration || 30)})</span>
                       <button 
                         className="ml-1 text-white hover:text-yellow-300" 
                         onClick={(e) => { e.stopPropagation(); onEditEvent(ev); }}
