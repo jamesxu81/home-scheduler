@@ -22,23 +22,24 @@ console.log(`Environment: ${isProduction ? 'Production (PostgreSQL)' : 'Developm
 console.log('');
 
 try {
-  // Try to apply migrations normally
-  execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+  // Try to apply migrations normally - capture stderr to detect P3009/P3018
+  execSync('npx prisma migrate deploy', { stdio: ['inherit', 'inherit', 'pipe'] });
   console.log('✅ Migrations applied successfully');
 } catch (error) {
-  // Capture full error output
-  let errorOutput = '';
+  // Capture full error output including stderr which has the P3009/P3018 info
+  const deployError = error.stderr ? error.stderr.toString() : '';
+  let statusOutput = '';
   try {
-    errorOutput = execSync('npx prisma migrate status', { encoding: 'utf-8' });
+    statusOutput = execSync('npx prisma migrate status', { encoding: 'utf-8' });
   } catch (statusError) {
-    errorOutput = (statusError.stdout || '') + (statusError.stderr || '');
+    statusOutput = (statusError.stdout || '') + (statusError.stderr || '');
   }
   
-  const fullErrorStr = (error.stdout || '') + (error.stderr || '') + error.toString() + errorOutput;
+  const fullErrorStr = deployError + ' ' + error.toString() + ' ' + statusOutput;
   
   console.log('');
   console.log('=== Migration Status ===');
-  console.log(errorOutput);
+  console.log(statusOutput);
   console.log('');
   
   // Check for P3009 - failed migrations
@@ -57,6 +58,17 @@ try {
         });
         console.log('✅ Migration marked as rolled back');
         console.log('✅ Duration column exists from recovery migration');
+        
+        // Now deploy remaining migrations
+        console.log('');
+        console.log('Deploying remaining migrations...');
+        try {
+          execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+          console.log('✅ All migrations applied successfully');
+        } catch (deployError) {
+          console.error('❌ Deployment failed:', deployError.message);
+          process.exit(1);
+        }
       } catch (resolveError) {
         const resolveStr = resolveError.toString();
         if (resolveStr.includes('not in a failed state') || resolveStr.includes('already marked')) {
