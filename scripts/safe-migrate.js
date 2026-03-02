@@ -21,95 +21,119 @@ console.log(`Environment: ${isProduction ? 'Production (PostgreSQL)' : 'Developm
 console.log('');
 
 try {
-  // Try to apply migrations normally
+  // Try to apply migrations normally, capturing output
   execSync('npx prisma migrate deploy', { stdio: 'inherit' });
   console.log('✅ Migrations applied successfully');
 } catch (error) {
-  const errorStr = error.toString();
+  // Capture full error including stdout and stderr
+  let errorOutput = '';
+  try {
+    errorOutput = execSync('npx prisma migrate status', { encoding: 'utf-8' });
+  } catch (statusError) {
+    errorOutput = statusError.stdout || statusError.stderr || error.toString();
+  }
   
-  // Check for P3009 - failed migrations error (migration is in failed state)
-  if (errorStr.includes('P3009') || errorStr.includes('failed migrations')) {
+  const fullErrorStr = (error.stdout || '') + (error.stderr || '') + error.toString() + errorOutput;
+  
+  console.log('');
+  console.log('Error details:', fullErrorStr);
+  console.log('');
+  
+  // Check for P3018 - columns already exist (partial execution)
+  if (fullErrorStr.includes('P3018') || fullErrorStr.includes('already exists') || fullErrorStr.includes('column') && fullErrorStr.includes('does not exist')) {
+    console.warn('⚠️  MIGRATION STATE ERROR DETECTED');
+    console.warn('================================================');
     console.warn('');
+    
+    // Check if it's a "column already exists" error
+    if (fullErrorStr.includes('already exists')) {
+      console.warn('Columns were partially created from previous execution');
+      console.warn('Marking migration as --applied...');
+    } else {
+      console.warn('Migration is in a failed state');
+      console.warn('Attempting to recover...');
+    }
+    console.warn('');
+    
+    // Try to mark as applied first
+    try {
+      console.log('Attempting to mark migration as applied...');
+      execSync('npx prisma migrate resolve --applied 20260303000000_add_recurring_fields', { 
+        stdio: 'inherit' 
+      });
+      console.log('✅ Migration marked as applied');
+      
+      // Now try to deploy
+      console.log('');
+      console.log('Attempting to deploy remaining migrations...');
+      try {
+        execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+        console.log('✅ Migrations applied successfully');
+      } catch (deployError) {
+        const statusOutput = execSync('npx prisma migrate status', { encoding: 'utf-8' }).toString();
+        if (statusOutput.includes('up to date') || statusOutput.includes('in sync')) {
+          console.log('✅ Database schema is already in sync');
+        } else {
+          throw deployError;
+        }
+      }
+    } catch (resolveAppliedError) {
+      // If marking as applied fails, try marking as rolled back
+      console.warn('');
+      console.warn('Marking as applied failed, trying to roll back...');
+      try {
+        execSync('npx prisma migrate resolve --rolled-back 20260303000000_add_recurring_fields', { 
+          stdio: 'inherit' 
+        });
+        console.log('✅ Migration marked as rolled back');
+        
+        console.log('');
+        console.log('Deploying migrations...');
+        execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+        console.log('✅ Migrations applied successfully');
+      } catch (retryError) {
+        console.error('❌ Migration recovery failed');
+        console.error('');
+        console.error('Please manually resolve the migration:');
+        console.error('  1. Check your database: Does the Event table have repeatType column?');
+        console.error('  2. If YES: npx prisma migrate resolve --applied 20260303000000_add_recurring_fields');
+        console.error('  3. If NO: npx prisma migrate resolve --rolled-back 20260303000000_add_recurring_fields');
+        console.error('  4. Then: npx prisma migrate deploy');
+        process.exit(1);
+      }
+    }
+  } 
+  // Check for P3009 - migration not yet applied
+  else if (fullErrorStr.includes('P3009') || fullErrorStr.includes('failed migrations')) {
     console.warn('⚠️  FAILED MIGRATION DETECTED: 20260303000000_add_recurring_fields');
     console.warn('Migration is in failed state (not yet applied)');
     console.warn('================================================');
     console.warn('');
     
-    if (isProduction) {
-      console.log('Step 1: Marking failed migration as rolled back...');
-      try {
-        execSync('npx prisma migrate resolve --rolled-back 20260303000000_add_recurring_fields', { 
-          stdio: 'inherit' 
-        });
-        console.log('✅ Failed migration marked as rolled back');
-      } catch (resolveError) {
-        console.error('❌ Could not resolve migration:', resolveError.message);
-        process.exit(1);
-      }
-      
-      console.log('');
-      console.log('Step 2: Deploying migrations...');
-      try {
-        execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-        console.log('');
-        console.log('✅ Migrations applied successfully with recovery workflow');
-      } catch (deployError) {
-        console.error('❌ Migration deployment failed:', deployError.message);
-        process.exit(1);
-      }
-    } else {
-      // For development, auto-recover
-      try {
-        console.log('Auto-resolving failed migration for development...');
-        execSync('npx prisma migrate resolve --rolled-back 20260303000000_add_recurring_fields', { 
-          stdio: 'inherit' 
-        });
-        execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-        console.log('✅ Migrations applied successfully');
-      } catch (recoveryError) {
-        console.error('❌ Auto-recovery failed:', recoveryError.message);
-        process.exit(1);
-      }
-    }
-  } 
-  // Check for P3018 - columns already exist (partial execution)
-  else if (errorStr.includes('P3018') || errorStr.includes('already exists')) {
-    console.warn('');
-    console.warn('⚠️  MIGRATION PARTIALLY APPLIED: 20260303000000_add_recurring_fields');
-    console.warn('Columns already exist in database from previous partial execution');
-    console.warn('================================================');
-    console.warn('');
-    
-    console.log('Step 1: Marking migration as already applied...');
+    console.log('Marking migration as rolled back...');
     try {
-      execSync('npx prisma migrate resolve --applied 20260303000000_add_recurring_fields', { 
+      execSync('npx prisma migrate resolve --rolled-back 20260303000000_add_recurring_fields', { 
         stdio: 'inherit' 
       });
-      console.log('✅ Migration marked as applied');
+      console.log('✅ Migration marked as rolled back');
     } catch (resolveError) {
       console.error('❌ Could not resolve migration:', resolveError.message);
       process.exit(1);
     }
     
     console.log('');
-    console.log('Step 2: Attempting to deploy remaining migrations...');
+    console.log('Deploying migrations...');
     try {
       execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-      console.log('');
-      console.log('✅ Migrations applied successfully after marking as applied');
+      console.log('✅ Migrations applied successfully');
     } catch (deployError) {
-      // Check if there are no more migrations to deploy
-      if (deployError.toString().includes('database schema is already in sync')) {
-        console.log('');
-        console.log('✅ Database schema is already in sync');
-      } else {
-        console.error('❌ Deployment still failing:', deployError.message);
-        process.exit(1);
-      }
+      console.error('❌ Deployment failed:', deployError.message);
+      process.exit(1);
     }
   }
   else {
-    console.error('❌ Migration failed with error:', error.message);
+    console.error('❌ Unexpected migration error:');
+    console.error(error.message);
     process.exit(1);
   }
 }
