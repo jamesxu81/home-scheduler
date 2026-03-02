@@ -51,24 +51,14 @@ try {
       console.warn('================================================');
       console.warn('');
       
-      console.log('Marking migration as rolled back...');
+      console.log('Marking migration as applied (column exists from recovery migration)...');
       try {
-        execSync('npx prisma migrate resolve --rolled-back 20260304000000_add_duration_to_events', { 
+        execSync('npx prisma migrate resolve --applied 20260304000000_add_duration_to_events', { 
           stdio: 'inherit' 
         });
-        console.log('✅ Migration marked as rolled back');
+        console.log('✅ Migration marked as applied');
         console.log('✅ Duration column exists from recovery migration');
-        
-        // Now deploy remaining migrations
-        console.log('');
-        console.log('Deploying remaining migrations...');
-        try {
-          execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-          console.log('✅ All migrations applied successfully');
-        } catch (deployError) {
-          console.error('❌ Deployment failed:', deployError.message);
-          process.exit(1);
-        }
+        console.log('✅ Build can proceed safely');
       } catch (resolveError) {
         const resolveStr = resolveError.toString();
         if (resolveStr.includes('not in a failed state') || resolveStr.includes('already marked')) {
