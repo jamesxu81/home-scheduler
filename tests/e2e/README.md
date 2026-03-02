@@ -2,7 +2,7 @@
 
 This directory contains end-to-end (E2E) tests using Playwright for testing the Kimberly's Scheduler application.
 
-## Test Files
+## Test Files 
 
 - **event-management.spec.ts** - Tests for creating, editing, deleting events and setting reminders
 - **recurring-events.spec.ts** - Tests for daily, weekly, weekdays, and monthly recurring events
