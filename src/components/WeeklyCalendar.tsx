@@ -3,6 +3,7 @@ import React, { useState } from "react";
 
 const HOURS = Array.from({ length: 17 }, (_, i) => i + 6); // 6am to 10pm
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const HOUR_HEIGHT = 60; // pixels per hour
 
 function getWeekStart(date: Date) {
   const day = date.getDay();
@@ -10,6 +11,13 @@ function getWeekStart(date: Date) {
   const weekStart = new Date(date.setDate(diff));
   weekStart.setHours(0, 0, 0, 0);
   return weekStart;
+}
+
+interface EventPosition {
+  event: Event;
+  top: number; // pixels from top
+  height: number; // pixels height
+  member: FamilyMember | undefined;
 }
 
 export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteEvent, onAddEvent }: {
@@ -31,17 +39,26 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
     return d;
   });
 
-  // Map events to each day/hour
-  function eventsForDayHour(day: Date, hour: number) {
+  // Get events for a specific day with positioning info
+  function getEventPositionsForDay(day: Date): EventPosition[] {
     const dayDateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
-    return events.filter(e => {
-      // Check if date matches
-      if (e.date !== dayDateStr) return false;
+    const dayEvents = events.filter(e => e.date === dayDateStr);
+    
+    return dayEvents.map(ev => {
+      const timeStr = ev.time || "00:00";
+      const [hour, minute] = timeStr.split(":").map(Number);
+      const startMinutesFromStart = (hour - HOURS[0]) * 60 + minute; // minutes from 6am
+      const duration = ev.duration || 30; // default 30 minutes
       
-      // Check if hour matches (handle missing time as 00:00)
-      const timeStr = e.time || "00:00";
-      const [eventHour] = timeStr.split(":").map(Number);
-      return eventHour === hour;
+      const top = startMinutesFromStart * (HOUR_HEIGHT / 60);
+      const height = duration * (HOUR_HEIGHT / 60);
+      
+      return {
+        event: ev,
+        top,
+        height,
+        member: members.find(m => m.id === ev.kidId),
+      };
     });
   }
 
@@ -55,31 +72,50 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
         </div>
         <button onClick={() => setCurrentWeek(new Date(currentWeek.setDate(currentWeek.getDate() + 7)))} className="px-2 py-1 bg-gray-200 rounded">Next</button>
       </div>
+      
       <div className="overflow-x-auto">
-        <table className="min-w-full border">
-          <thead>
-            <tr>
-              <th className="border px-2 py-1 w-16">Time</th>
-              {days.map((d, i) => {
-                const isToday = d.getTime() === today.getTime();
-                return (
-                  <th key={i} className={`border px-2 py-1 w-32 text-center ${isToday ? 'bg-blue-100 border-blue-300' : ''}`}>
-                    {WEEKDAYS[i]}
-                  </th>
-                );
-              })}
-            </tr>
-          </thead>
-          <tbody>
+        {/* Day Headers */}
+        <div className="flex">
+          <div className="w-16 border-r"></div>
+          <div className="flex flex-1">
+            {days.map((d, i) => {
+              const isToday = d.getTime() === today.getTime();
+              return (
+                <div key={i} className={`flex-1 text-center font-bold py-2 border-r ${isToday ? 'bg-blue-100' : ''}`}>
+                  {WEEKDAYS[i]}
+                  <br />
+                  <span className="text-sm">{d.toLocaleDateString()}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Time Grid */}
+        <div className="flex border-t">
+          {/* Time Column */}
+          <div className="w-16 border-r">
             {HOURS.map(hour => (
-              <tr key={hour}>
-                <td className="border px-2 py-1 text-right align-top text-xs">{hour}:00</td>
-                {days.map((day, i) => {
-                  const isToday = day.getTime() === today.getTime();
-                  return (
-                    <td 
-                      key={i} 
-                      className={`border px-1 py-1 align-top h-12 cursor-pointer hover:bg-indigo-50 transition ${isToday ? 'bg-blue-50 border-blue-300' : ''}`}
+              <div key={hour} className="border-b" style={{ height: HOUR_HEIGHT }}>
+                <div className="text-right text-xs px-2 py-1">{hour}:00</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Days Grid */}
+          <div className="flex flex-1">
+            {days.map((day, dayIdx) => {
+              const isToday = day.getTime() === today.getTime();
+              const eventPositions = getEventPositionsForDay(day);
+              
+              return (
+                <div key={dayIdx} className={`flex-1 border-r relative ${isToday ? 'bg-blue-50' : ''}`}>
+                  {/* Hour rows for click areas */}
+                  {HOURS.map(hour => (
+                    <div
+                      key={hour}
+                      className="border-b hover:bg-indigo-50 cursor-pointer transition"
+                      style={{ height: HOUR_HEIGHT }}
                       onClick={() => {
                         if (onAddEvent) {
                           const dateStr = day.toISOString().split('T')[0];
@@ -87,30 +123,56 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
                           onAddEvent(dateStr, timeStr);
                         }
                       }}
-                    >
-                      {eventsForDayHour(day, hour).map(ev => {
-                        const member = members.find(m => m.id === ev.kidId);
-                        const formatDuration = (minutes: number) => {
-                          if (minutes < 60) return `${minutes}m`;
-                          const hours = Math.floor(minutes / 60);
-                          const mins = minutes % 60;
-                          return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-                        };
-                        return (
-                          <div key={ev.id} className="mb-1 p-1 rounded bg-indigo-100 border-l-4" style={{ borderColor: member?.color || '#6366f1' }}>
-                            <span className="font-semibold text-xs" style={{ color: member?.color }}>{ev.title} ({formatDuration(ev.duration || 30)})</span>
-                            <button className="ml-1 text-xs text-gray-500 hover:text-indigo-600" onClick={() => onEditEvent(ev)}>✏️</button>
-                            <button className="ml-1 text-xs text-gray-500 hover:text-red-600" onClick={() => onDeleteEvent(ev.id)}>❌</button>
-                          </div>
-                        );
-                      })}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    />
+                  ))}
+
+                  {/* Events (absolutely positioned) */}
+                  <div className="absolute inset-0">
+                    {eventPositions.map(({ event: ev, top, height, member }) => (
+                      <div
+                        key={ev.id}
+                        className="absolute left-1 right-1 p-1 rounded text-white text-xs overflow-hidden"
+                        style={{
+                          top: `${top}px`,
+                          height: `${Math.max(height, 30)}px`, // minimum height for visibility
+                          backgroundColor: member?.color || '#6366f1',
+                          opacity: 0.9,
+                        }}
+                        title={`${ev.title} • ${ev.time || '00:00'} (${ev.duration || 30}m)`}
+                      >
+                        <div className="font-semibold truncate">{ev.title}</div>
+                        <div className="text-xs flex justify-between gap-1">
+                          <span>{ev.time || '00:00'}</span>
+                          <span>({ev.duration || 30}m)</span>
+                        </div>
+                        <div className="flex gap-1 mt-1">
+                          <button
+                            className="text-white hover:text-yellow-300 flex-shrink-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEditEvent(ev);
+                            }}
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="text-white hover:text-red-300 flex-shrink-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteEvent(ev.id);
+                            }}
+                          >
+                            ❌
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
