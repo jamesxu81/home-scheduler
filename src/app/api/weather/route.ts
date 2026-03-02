@@ -71,25 +71,64 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  try {
-    // Build the URL manually to avoid double-encoding the comma-separated daily parameters
-    const params = new URLSearchParams();
-    params.append("latitude", lat);
-    params.append("longitude", lon);
-    params.append("start_date", date);
-    params.append("end_date", date);
-    // Correct parameter names for Open-Meteo API
-    const dailyParams = "temperature_2m_max,temperature_2m_min,weather_code,relative_humidity_2m_max,wind_speed_10m_max";
-    const url = `https://api.open-meteo.com/v1/forecast?${params.toString()}&daily=${dailyParams}&timezone=auto`;
+  // Validate date format (YYYY-MM-DD)
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(date)) {
+    console.error(`Invalid date format: ${date}`);
+    return NextResponse.json(
+      { error: "Date must be in YYYY-MM-DD format" },
+      { status: 400 }
+    );
+  }
 
-    const response = await fetch(url, {
+  // Validate latitude and longitude are valid numbers
+  const latitude = parseFloat(lat);
+  const longitude = parseFloat(lon);
+  
+  if (isNaN(latitude) || isNaN(longitude)) {
+    console.error(`Invalid coordinates: lat=${lat}, lon=${lon}`);
+    return NextResponse.json(
+      { error: "Latitude and longitude must be valid numbers" },
+      { status: 400 }
+    );
+  }
+
+  if (latitude < -90 || latitude > 90) {
+    console.error(`Latitude out of range: ${latitude}`);
+    return NextResponse.json(
+      { error: "Latitude must be between -90 and 90" },
+      { status: 400 }
+    );
+  }
+
+  if (longitude < -180 || longitude > 180) {
+    console.error(`Longitude out of range: ${longitude}`);
+    return NextResponse.json(
+      { error: "Longitude must be between -180 and 180" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    // Build the URL with proper parameter encoding
+    const url = new URL("https://api.open-meteo.com/v1/forecast");
+    url.searchParams.append("latitude", latitude.toString());
+    url.searchParams.append("longitude", longitude.toString());
+    url.searchParams.append("start_date", date);
+    url.searchParams.append("end_date", date);
+    url.searchParams.append("daily", "temperature_2m_max,temperature_2m_min,weather_code,relative_humidity_2m_max,wind_speed_10m_max");
+    url.searchParams.append("timezone", "auto");
+
+    const response = await fetch(url.toString(), {
       headers: {
         "User-Agent": "Kimberly-Scheduler",
       },
     });
 
     const responseText = await response.text();
+    
     if (!response.ok) {
+      console.error(`Open-Meteo API error: Status ${response.status}, Body: ${responseText}`);
       throw new Error(`Weather API error: ${response.statusText}`);
     }
 

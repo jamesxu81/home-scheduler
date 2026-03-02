@@ -155,6 +155,19 @@ export async function fetchWeather(
   date: string,
   location: LocationCoords = DEFAULT_LOCATION
 ): Promise<WeatherData> {
+  // Validate date format (YYYY-MM-DD)
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(date)) {
+    console.error(`Invalid date format provided to fetchWeather: ${date}`);
+    return {
+      temperature: 0,
+      condition: "Invalid date",
+      icon: "❓",
+      humidity: 0,
+      windSpeed: 0,
+    };
+  }
+
   const cacheKey = getCacheKey(date, location);
 
   // Check cache
@@ -164,12 +177,18 @@ export async function fetchWeather(
   }
 
   try {
+    // Ensure coordinates are properly formatted as numbers, then convert to string
+    const latStr = location.latitude.toString();
+    const lonStr = location.longitude.toString();
+    
     // Use backend API route to avoid CORS issues
     const response = await fetch(
-      `/api/weather?date=${date}&lat=${location.latitude}&lon=${location.longitude}`
+      `/api/weather?date=${encodeURIComponent(date)}&lat=${encodeURIComponent(latStr)}&lon=${encodeURIComponent(lonStr)}`
     );
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error(`Weather API error for date ${date}: ${response.statusText}`, errorData);
       throw new Error(`Weather API error: ${response.statusText}`);
     }
 
