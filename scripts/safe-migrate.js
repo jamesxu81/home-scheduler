@@ -41,27 +41,56 @@ try {
   console.log(errorOutput);
   console.log('');
   
-  // Check for attempts to add duration column when it already exists
-  if ((fullErrorStr.includes('20260304000000_add_duration_to_events') || fullErrorStr.includes('add_duration')) &&
-      (fullErrorStr.includes('column "duration"') && fullErrorStr.includes('already exists'))) {
-    console.warn('⚠️  DUPLICATE MIGRATION: 20260304000000_add_duration_to_events');
-    console.warn('Column already added by recovery migration');
-    console.warn('================================================');
-    console.warn('');
-    
-    console.log('Marking migration as rolled back (work already done)...');
-    try {
-      execSync('npx prisma migrate resolve --rolled-back 20260304000000_add_duration_to_events', { 
-        stdio: 'inherit' 
-      });
-      console.log('✅ Migration marked as rolled back');
-      console.log('✅ Duration column already exists from recovery migration');
-    } catch (resolveError) {
-      const resolveStr = resolveError.toString();
-      if (resolveStr.includes('not in a failed state') || resolveStr.includes('already marked')) {
-        console.log('✅ Migration already resolved');
-      } else {
+  // Check for P3009 - failed migrations
+  if (fullErrorStr.includes('P3009') || fullErrorStr.includes('failed migrations')) {
+    // Check if it's specifically the 20260304000000 migration (duplicate add_duration)
+    if (fullErrorStr.includes('20260304000000_add_duration_to_events')) {
+      console.warn('⚠️  DUPLICATE MIGRATION FAILED: 20260304000000_add_duration_to_events');
+      console.warn('Column already added by recovery migration 20260302100000');
+      console.warn('================================================');
+      console.warn('');
+      
+      console.log('Marking migration as rolled back...');
+      try {
+        execSync('npx prisma migrate resolve --rolled-back 20260304000000_add_duration_to_events', { 
+          stdio: 'inherit' 
+        });
+        console.log('✅ Migration marked as rolled back');
+        console.log('✅ Duration column exists from recovery migration');
+      } catch (resolveError) {
+        const resolveStr = resolveError.toString();
+        if (resolveStr.includes('not in a failed state') || resolveStr.includes('already marked')) {
+          console.log('✅ Migration already resolved');
+        } else {
+          console.error('❌ Could not resolve migration:', resolveError.message);
+          process.exit(1);
+        }
+      }
+    } else {
+      // Generic P3009 handler for other failed migrations
+      console.warn('⚠️  FAILED MIGRATION DETECTED');
+      console.warn('Migration is in failed state');
+      console.warn('================================================');
+      console.warn('');
+      
+      console.log('Marking migration as rolled back...');
+      try {
+        execSync('npx prisma migrate resolve --rolled-back 20260303000000_add_recurring_fields', { 
+          stdio: 'inherit' 
+        });
+        console.log('✅ Migration marked as rolled back');
+      } catch (resolveError) {
         console.error('❌ Could not resolve migration:', resolveError.message);
+        process.exit(1);
+      }
+      
+      console.log('');
+      console.log('Deploying migrations...');
+      try {
+        execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+        console.log('✅ Migrations applied successfully');
+      } catch (deployError) {
+        console.error('❌ Deployment failed:', deployError.message);
         process.exit(1);
       }
     }
