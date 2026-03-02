@@ -1,5 +1,6 @@
 import { Event, FamilyMember } from "@/types";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { fetchWeather, WeatherData } from "@/lib/weather";
 
 const HOURS = Array.from({ length: 17 }, (_, i) => i + 6); // 6am to 10pm
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -28,6 +29,7 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
   onAddEvent?: (date: string, time: string) => void;
 }) {
   const [currentWeek, setCurrentWeek] = useState(getWeekStart(new Date()));
+  const [weatherData, setWeatherData] = useState<Record<string, WeatherData | null>>({});
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -38,6 +40,37 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
     d.setHours(0, 0, 0, 0);
     return d;
   });
+
+  // Fetch weather for all days in the week (max 15 days from today)
+  useEffect(() => {
+    const fetchWeekWeather = async () => {
+      const weatherMap: Record<string, WeatherData | null> = {};
+      const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
+      const fifteenDaysFromNow = new Date(todayDate);
+      fifteenDaysFromNow.setDate(fifteenDaysFromNow.getDate() + 15);
+
+      for (const day of days) {
+        // Only fetch weather for dates within 15 days from today
+        if (day > fifteenDaysFromNow) {
+          continue;
+        }
+        
+        const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+        try {
+          const weather = await fetchWeather(dateStr);
+          weatherMap[dateStr] = weather;
+        } catch (error) {
+          console.error(`Error fetching weather for ${dateStr}:`, error);
+          weatherMap[dateStr] = null;
+        }
+      }
+
+      setWeatherData(weatherMap);
+    };
+
+    fetchWeekWeather();
+  }, [currentWeek]);
 
   // Get events for a specific day with positioning info
   function getEventPositionsForDay(day: Date): EventPosition[] {
@@ -80,11 +113,17 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
           <div className="flex flex-1">
             {days.map((d, i) => {
               const isToday = d.getTime() === today.getTime();
+              const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+              const weather = weatherData[dateStr];
               return (
                 <div key={i} className={`flex-1 text-center font-bold py-2 border-r ${isToday ? 'bg-blue-100' : ''}`}>
-                  {WEEKDAYS[i]}
-                  <br />
-                  <span className="text-sm">{d.toLocaleDateString()}</span>
+                  <div>{WEEKDAYS[i]}</div>
+                  {weather && (
+                    <div className="flex flex-col items-center justify-center gap-1 mt-1">
+                      <span className="text-lg">{weather.icon}</span>
+                      <span className="text-xs font-semibold text-gray-700">{weather.temperature}°</span>
+                    </div>
+                  )}
                 </div>
               );
             })}

@@ -17,16 +17,25 @@ A modern, full-stack web application for managing family schedules and activitie
 - Track age for reference
 - Quick filtering by family member
 
+🌤️ **Weather Integration**
+- View weather forecasts for upcoming event dates
+- Weather displayed in list, calendar, and weekly views
+- Uses free Open-Meteo API (no API key required)
+- Smart caching to minimize API calls (1-hour throttling)
+- Forecasts limited to 15 days ahead for optimal performance
+- Shows temperature, weather condition, and weather icons
+
 📱 **User-Friendly Interface**
 - Clean, intuitive design with Tailwind CSS
 - Responsive layout works on mobile, tablet, and desktop
 - Real-time updates as you add/modify events
 - Calendar and weekly views for better planning
+- Default location set to Auckland, New Zealand (customizable)
 
 📅 **Calendar Views**
-- Monthly calendar view
-- Weekly schedule view
-- Comprehensive event listing
+- Monthly calendar view with weather on each day
+- Weekly schedule view with hourly time slots and weather
+- Comprehensive event listing with date grouping
 - Easy date navigation
 
 🔄 **Data Persistence**
@@ -154,7 +163,8 @@ home-scheduler/
 │   │   └── api/                    # API routes
 │   │       ├── events/route.ts      # Event CRUD operations
 │   │       ├── members/route.ts     # Family member CRUD operations
-│   │       └── family/route.ts      # Family data endpoints
+│   │       ├── family/route.ts      # Family data endpoints
+│   │       └── weather/route.ts     # Weather API proxy (Open-Meteo)
 │   ├── components/
 │   │   ├── EventForm.tsx           # Form for adding/editing events
 │   │   ├── EventList.tsx           # Display list of events
@@ -164,7 +174,8 @@ home-scheduler/
 │   ├── lib/
 │   │   ├── api.ts                  # Client-side API utilities
 │   │   ├── prisma.ts               # Prisma client singleton
-│   │   └── recurring.ts            # Recurring event logic
+│   │   ├── recurring.ts            # Recurring event logic
+│   │   └── weather.ts              # Weather integration with Open-Meteo API
 │   ├── types/
 │   │   └── index.ts                # TypeScript type definitions
 │   └── __tests__/                  # Unit tests
@@ -244,6 +255,28 @@ npx prisma migrate dev
 # View database in Prisma Studio
 npx prisma studio
 ```
+
+## Weather Integration
+
+The app includes integrated weather forecasts for event planning:
+
+### Features
+- **Weather Display**: Shows temperature and condition for upcoming event dates
+- **Multiple Views**: Weather visible in list view, calendar month view, and weekly view
+- **Default Location**: Auckland, New Zealand (customizable via `setUserLocation()`)
+- **API Provider**: Open-Meteo free weather API (no authentication required)
+- **Forecast Range**: Automatically limited to 15 days ahead for performance optimization
+- **Smart Caching**: 
+  - 1-hour cache per individual date to avoid duplicate API calls
+  - Persistent month-level caching so weather survives page navigation
+  - Throttling prevents excessive API calls when navigating months
+
+### Technical Details
+- **Backend Route**: `/api/weather` proxies requests through Next.js server
+- **Parameters**: `temperature_2m_max`, `temperature_2m_min`, `weather_code`, `humidity`, `wind_speed`
+- **Optimization**: Only first 15 days of each month are fetched from API
+- **Weather Icons**: WMO-based emoji mapping (☀️ Sunny, ⛅ Cloudy, 🌧️ Rainy, etc.)
+- **Location**: Latitude/Longitude based (default: -37.7749, 174.8860 for Auckland)
 
 ## Browser Support
 

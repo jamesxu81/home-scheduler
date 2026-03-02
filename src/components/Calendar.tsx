@@ -1,5 +1,6 @@
 import { Event, FamilyMember } from "@/types";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { fetchWeather, WeatherData, shouldFetchMonthWeather, recordMonthFetchTime, getMonthWeatherFromCache, cacheMonthWeather } from "@/lib/weather";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [
@@ -24,6 +25,56 @@ export default function Calendar({ events, members, onEditEvent, onDeleteEvent }
   const today = new Date();
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
+  const [weatherData, setWeatherData] = useState<Record<string, WeatherData | null>>({});
+
+  // Fetch weather for all days in the current month (only once per hour)
+  useEffect(() => {
+    const fetchMonthWeather = async () => {
+      // Check if we have cached weather for this month
+      const cachedWeather = getMonthWeatherFromCache(currentYear, currentMonth);
+      if (cachedWeather) {
+        setWeatherData(cachedWeather);
+        return;
+      }
+
+      // Only fetch if we haven't fetched this month's weather in the last hour
+      if (!shouldFetchMonthWeather(currentYear, currentMonth)) {
+        return;
+      }
+
+      const daysInCurrentMonth = getDaysInMonth(currentYear, currentMonth);
+      const weatherMap: Record<string, WeatherData | null> = {};
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const fifteenDaysFromNow = new Date(today);
+      fifteenDaysFromNow.setDate(fifteenDaysFromNow.getDate() + 15);
+
+      for (let day = 1; day <= daysInCurrentMonth; day++) {
+        const currentDate = new Date(currentYear, currentMonth, day);
+        currentDate.setHours(0, 0, 0, 0);
+        
+        // Only fetch weather for dates within 15 days from today
+        if (currentDate > fifteenDaysFromNow) {
+          continue;
+        }
+        
+        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        try {
+          const weather = await fetchWeather(dateStr);
+          weatherMap[dateStr] = weather;
+        } catch (error) {
+          console.error(`Error fetching weather for ${dateStr}:`, error);
+          weatherMap[dateStr] = null;
+        }
+      }
+
+      setWeatherData(weatherMap);
+      cacheMonthWeather(currentYear, currentMonth, weatherMap);
+      recordMonthFetchTime(currentYear, currentMonth);
+    };
+
+    fetchMonthWeather();
+  }, [currentMonth, currentYear]);
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
@@ -75,30 +126,34 @@ export default function Calendar({ events, members, onEditEvent, onDeleteEvent }
         {days.map(day => {
           const dayEvents = eventsForDay(day);
           const isToday = day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
+          const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const weather = weatherData[dateStr];
           
           return (
             <div 
               key={day} 
               className={`aspect-square border rounded p-1 overflow-y-auto ${isToday ? 'bg-blue-50 border-blue-300 border-2' : 'bg-white border-gray-200'}`}
             >
-              <div className={`font-semibold text-sm ${isToday ? 'text-blue-600' : 'text-gray-600'}`}>{day}</div>
+              <div className="flex items-start justify-between">
+                <div className={`font-semibold text-sm ${isToday ? 'text-blue-600' : 'text-gray-600'}`}>{day}</div>
+                {weather && (
+                  <div className="flex flex-col items-end justify-start gap-0.5">
+                    <span className="text-lg leading-none">{weather.icon}</span>
+                    <span className="text-xs font-semibold text-gray-700">{weather.temperature}°</span>
+                  </div>
+                )}
+              </div>
               <div className="space-y-1 mt-1">
                 {dayEvents.slice(0, 3).map(ev => {
                   const member = members.find(m => m.id === ev.kidId);
-                  const formatDuration = (minutes: number) => {
-                    if (minutes < 60) return `${minutes}m`;
-                    const hours = Math.floor(minutes / 60);
-                    const mins = minutes % 60;
-                    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-                  };
                   return (
                     <div 
                       key={ev.id} 
                       className="text-xs p-1 rounded truncate text-white cursor-pointer hover:opacity-80"
                       style={{ backgroundColor: member?.color || '#6366f1' }}
-                      title={`${ev.title} (${formatDuration(ev.duration || 30)})`}
+                      title={ev.title}
                     >
-                      <span>{ev.title} ({formatDuration(ev.duration || 30)})</span>
+                      <span>{ev.title}</span>
                       <button 
                         className="ml-1 text-white hover:text-yellow-300" 
                         onClick={(e) => { e.stopPropagation(); onEditEvent(ev); }}
