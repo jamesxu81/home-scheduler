@@ -1,7 +1,7 @@
 "use client";
 
 import { Event, FamilyMember } from "@/types";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { fetchWeather, WeatherData, getMonthWeatherFromCache, cacheMonthWeather, recordMonthFetchTime, shouldFetchMonthWeather } from "@/lib/weather";
 
 interface EventListProps {
@@ -45,8 +45,18 @@ export default function EventList({
 }: EventListProps) {
   const [weatherData, setWeatherData] = useState<WeatherCache>({});
 
+  // Create a stable dependency based on sorted unique dates
+  const sortedUniqueDates = useMemo(() => {
+    const uniqueDates = [...new Set(events.map((e) => e.date))];
+    return uniqueDates.sort();
+  }, [events]);
+
   // Fetch weather for unique dates in events
   useEffect(() => {
+    if (!sortedUniqueDates || sortedUniqueDates.length === 0) {
+      return;
+    }
+
     const fetchWeatherForDates = async () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -62,10 +72,17 @@ export default function EventList({
       }
 
       // If not cached, fetch weather for unique dates from events
-      const uniqueDates = [...new Set(events.map((e) => e.date))];
       const newWeatherData: WeatherCache = {};
+      const fifteenDaysFromNow = new Date(today);
+      fifteenDaysFromNow.setDate(fifteenDaysFromNow.getDate() + 15);
 
-      for (const date of uniqueDates) {
+      for (const date of sortedUniqueDates) {
+        // Skip dates beyond 15 days
+        const dateObj = new Date(date);
+        if (dateObj > fifteenDaysFromNow) {
+          continue;
+        }
+
         try {
           const weather = await fetchWeather(date);
           newWeatherData[date] = weather;
@@ -84,10 +101,9 @@ export default function EventList({
       }
     };
 
-    if (events.length > 0) {
-      fetchWeatherForDates();
-    }
-  }, [events]);
+    fetchWeatherForDates();
+    // Use stable sorted date array as dependency
+  }, [sortedUniqueDates]);
   const getMemberColor = (memberId: string) => {
     return members.find((m) => m.id === memberId)?.color || "#999999";
   };

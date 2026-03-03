@@ -72,6 +72,9 @@ const weatherCache = new Map<
   { data: WeatherData; timestamp: number }
 >();
 
+// Track pending requests to avoid concurrent calls for the same date
+const pendingRequests = new Map<string, Promise<WeatherData>>();
+
 // Store cached month weather separately for persistence
 const monthWeatherCache = new Map<
   string,
@@ -170,45 +173,61 @@ export async function fetchWeather(
 
   const cacheKey = getCacheKey(date, location);
 
-  // Check cache
+  // Check cache first
   const cached = weatherCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION_MS) {
     return cached.data;
   }
 
-  try {
-    // Ensure coordinates are properly formatted as numbers, then convert to string
-    const latStr = location.latitude.toString();
-    const lonStr = location.longitude.toString();
-    
-    // Use backend API route to avoid CORS issues
-    const response = await fetch(
-      `/api/weather?date=${encodeURIComponent(date)}&lat=${encodeURIComponent(latStr)}&lon=${encodeURIComponent(lonStr)}`
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error(`Weather API error for date ${date}: ${response.statusText}`, errorData);
-      throw new Error(`Weather API error: ${response.statusText}`);
-    }
-
-    const weatherData: WeatherData = await response.json();
-
-    // Cache the result
-    weatherCache.set(cacheKey, { data: weatherData, timestamp: Date.now() });
-
-    return weatherData;
-  } catch (error) {
-    console.error("Error fetching weather:", error);
-    // Return a default/error state
-    return {
-      temperature: 0,
-      condition: "N/A",
-      icon: "❓",
-      humidity: 0,
-      windSpeed: 0,
-    };
+  // Check if there's already a pending request for this date
+  if (pendingRequests.has(cacheKey)) {
+    return pendingRequests.get(cacheKey)!;
   }
+
+  // Create a new pending request
+  const fetchPromise = (async () => {
+    try {
+      // Ensure coordinates are properly formatted as numbers, then convert to string
+      const latStr = location.latitude.toString();
+      const lonStr = location.longitude.toString();
+      
+      // Use backend API route to avoid CORS issues
+      const response = await fetch(
+        `/api/weather?date=${encodeURIComponent(date)}&lat=${encodeURIComponent(latStr)}&lon=${encodeURIComponent(lonStr)}`
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error(`Weather API error for date ${date}: ${response.statusText}`, errorData);
+        throw new Error(`Weather API error: ${response.statusText}`);
+      }
+
+      const weatherData: WeatherData = await response.json();
+
+      // Cache the result
+      weatherCache.set(cacheKey, { data: weatherData, timestamp: Date.now() });
+
+      return weatherData;
+    } catch (error) {
+      console.error("Error fetching weather:", error);
+      // Return a default/error state
+      return {
+        temperature: 0,
+        condition: "N/A",
+        icon: "❓",
+        humidity: 0,
+        windSpeed: 0,
+      };
+    } finally {
+      // Remove from pending requests
+      pendingRequests.delete(cacheKey);
+    }
+  })();
+
+  // Store the pending request
+  pendingRequests.set(cacheKey, fetchPromise);
+
+  return fetchPromise;
 }
 
 export function setUserLocation(latitude: number, longitude: number): void {
@@ -217,8 +236,10 @@ export function setUserLocation(latitude: number, longitude: number): void {
   DEFAULT_LOCATION.longitude = longitude;
   // Clear cache when location changes
   weatherCache.clear();
+  pendingRequests.clear();
 }
 
 export function clearWeatherCache(): void {
   weatherCache.clear();
+  pendingRequests.clear();
 }

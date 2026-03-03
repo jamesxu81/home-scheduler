@@ -1,5 +1,5 @@
 import { Event, FamilyMember } from "@/types";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { fetchWeather, WeatherData } from "@/lib/weather";
 
 const HOURS = Array.from({ length: 17 }, (_, i) => i + 6); // 6am to 10pm
@@ -41,6 +41,11 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
     return d;
   });
 
+  // Create a stable week identifier as a string
+  const weekIdentifier = useMemo(() => {
+    return `${currentWeek.getFullYear()}-${String(currentWeek.getMonth() + 1).padStart(2, "0")}-${String(currentWeek.getDate()).padStart(2, "0")}`;
+  }, [currentWeek]);
+
   // Fetch weather for all days in the week (max 15 days from today)
   useEffect(() => {
     const fetchWeekWeather = async () => {
@@ -70,7 +75,8 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
     };
 
     fetchWeekWeather();
-  }, [currentWeek]);
+    // Use stable week identifier as dependency
+  }, [weekIdentifier]);
 
   // Get events for a specific day with positioning info
   function getEventPositionsForDay(day: Date): EventPosition[] {
@@ -98,12 +104,18 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
   return (
     <div className="bg-white rounded-lg shadow-lg p-4">
       <div className="flex justify-between items-center mb-4">
-        <button onClick={() => setCurrentWeek(new Date(currentWeek.setDate(currentWeek.getDate() - 7)))} className="px-2 py-1 bg-gray-200 rounded">Prev</button>
+        <button onClick={() => {
+          const prevWeek = new Date(currentWeek.getFullYear(), currentWeek.getMonth(), currentWeek.getDate() - 7);
+          setCurrentWeek(getWeekStart(prevWeek));
+        }} className="px-2 py-1 bg-gray-200 rounded">Prev</button>
         <div className="flex flex-col items-center">
           <span className="font-bold text-lg">Week of {days[0].toLocaleDateString()} - {days[6].toLocaleDateString()}</span>
           <button onClick={() => setCurrentWeek(getWeekStart(new Date()))} className="mt-2 px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm">Today</button>
         </div>
-        <button onClick={() => setCurrentWeek(new Date(currentWeek.setDate(currentWeek.getDate() + 7)))} className="px-2 py-1 bg-gray-200 rounded">Next</button>
+        <button onClick={() => {
+          const nextWeek = new Date(currentWeek.getFullYear(), currentWeek.getMonth(), currentWeek.getDate() + 7);
+          setCurrentWeek(getWeekStart(nextWeek));
+        }} className="px-2 py-1 bg-gray-200 rounded">Next</button>
       </div>
       
       <div className="overflow-x-auto">
@@ -170,7 +182,7 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
                     {eventPositions.map(({ event: ev, top, height, member }) => (
                       <div
                         key={ev.id}
-                        className="absolute left-1 right-1 p-1 rounded text-white text-xs overflow-hidden"
+                        className="absolute left-1 right-1 p-1 rounded text-white text-xs overflow-hidden cursor-pointer hover:opacity-100 hover:shadow-lg transition-all"
                         style={{
                           top: `${top}px`,
                           height: `${Math.max(height, 30)}px`, // minimum height for visibility
@@ -178,6 +190,7 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
                           opacity: 0.9,
                         }}
                         title={`${ev.title} • ${ev.time || '00:00'} (${ev.duration || 30}m)`}
+                        onClick={() => onEditEvent(ev)}
                       >
                         <div className="font-semibold truncate">{ev.title}</div>
                         <div className="text-xs flex justify-between gap-1">

@@ -16,11 +16,10 @@ function getFirstDayOfMonth(year: number, month: number) {
   return new Date(year, month, 1).getDay();
 }
 
-export default function Calendar({ events, members, onEditEvent, onDeleteEvent }: {
+export default function Calendar({ events, members, onDayClick }: {
   events: Event[];
   members: FamilyMember[];
-  onEditEvent: (event: Event) => void;
-  onDeleteEvent: (eventId: string) => void;
+  onDayClick: (date: string) => void;
 }) {
   const today = new Date();
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
@@ -132,7 +131,8 @@ export default function Calendar({ events, members, onEditEvent, onDeleteEvent }
           return (
             <div 
               key={day} 
-              className={`aspect-square border rounded p-1 overflow-y-auto ${isToday ? 'bg-blue-50 border-blue-300 border-2' : 'bg-white border-gray-200'}`}
+              className={`aspect-square border rounded p-1 overflow-y-auto cursor-pointer transition hover:shadow-lg ${isToday ? 'bg-blue-50 border-blue-300 border-2' : 'bg-white border-gray-200 hover:bg-gray-50'}`}
+              onClick={() => onDayClick(dateStr)}
             >
               <div className="flex items-start justify-between">
                 <div className={`font-semibold text-sm ${isToday ? 'text-blue-600' : 'text-gray-600'}`}>{day}</div>
@@ -149,23 +149,11 @@ export default function Calendar({ events, members, onEditEvent, onDeleteEvent }
                   return (
                     <div 
                       key={ev.id} 
-                      className="text-xs p-1 rounded truncate text-white cursor-pointer hover:opacity-80"
+                      className="text-xs p-1 rounded truncate text-white"
                       style={{ backgroundColor: member?.color || '#6366f1' }}
                       title={ev.title}
                     >
                       <span>{ev.title}</span>
-                      <button 
-                        className="ml-1 text-white hover:text-yellow-300" 
-                        onClick={(e) => { e.stopPropagation(); onEditEvent(ev); }}
-                      >
-                        ✏️
-                      </button>
-                      <button 
-                        className="ml-1 text-white hover:text-red-300" 
-                        onClick={(e) => { e.stopPropagation(); onDeleteEvent(ev.id); }}
-                      >
-                        ❌
-                      </button>
                     </div>
                   );
                 })}
