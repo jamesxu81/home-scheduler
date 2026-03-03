@@ -291,9 +291,6 @@ export default function EventList({
                     </div>
                   </div>
                 )}
-                {weatherData[group.date] === "loading" && (
-                  <div className="text-xs text-gray-500 animate-pulse">Loading weather...</div>
-                )}
               </div>
             </div>
 

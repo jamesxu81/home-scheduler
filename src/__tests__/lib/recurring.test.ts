@@ -8,6 +8,7 @@ describe('Recurring Events Expansion', () => {
     description: 'Test event',
     date: '2026-03-05',
     time: '14:00',
+    duration: 30,
     kidId: 'kid-1',
     category: 'activities',
     reminder: false,
