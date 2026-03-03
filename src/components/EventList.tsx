@@ -2,7 +2,7 @@
 
 import { Event, FamilyMember } from "@/types";
 import { useState, useEffect } from "react";
-import { fetchWeather, WeatherData } from "@/lib/weather";
+import { fetchWeather, WeatherData, getMonthWeatherFromCache, cacheMonthWeather, recordMonthFetchTime, shouldFetchMonthWeather } from "@/lib/weather";
 
 interface EventListProps {
   events: Event[];
@@ -12,7 +12,7 @@ interface EventListProps {
 }
 
 interface WeatherCache {
-  [date: string]: WeatherData | "loading" | "error";
+  [date: string]: WeatherData | null;
 }
 
 const categoryIcons: Record<string, string> = {
@@ -45,29 +45,46 @@ export default function EventList({
 }: EventListProps) {
   const [weatherData, setWeatherData] = useState<WeatherCache>({});
 
-  // Fetch weather for unique dates
+  // Fetch weather for unique dates in events
   useEffect(() => {
-    const uniqueDates = [...new Set(events.map((e) => e.date))];
-
     const fetchWeatherForDates = async () => {
-      const newWeatherData: WeatherCache = { ...weatherData };
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+
+      // Check if we have cached weather for the current month
+      const cachedMonthWeather = getMonthWeatherFromCache(currentYear, currentMonth);
+      if (cachedMonthWeather) {
+        // Use cached month weather
+        setWeatherData(cachedMonthWeather);
+        return;
+      }
+
+      // If not cached, fetch weather for unique dates from events
+      const uniqueDates = [...new Set(events.map((e) => e.date))];
+      const newWeatherData: WeatherCache = {};
 
       for (const date of uniqueDates) {
-        if (!newWeatherData[date]) {
-          newWeatherData[date] = "loading";
-          try {
-            const weather = await fetchWeather(date);
-            newWeatherData[date] = weather;
-          } catch (error) {
-            newWeatherData[date] = "error";
-          }
+        try {
+          const weather = await fetchWeather(date);
+          newWeatherData[date] = weather;
+        } catch (error) {
+          console.error(`Error fetching weather for ${date}:`, error);
+          newWeatherData[date] = null;
         }
       }
 
       setWeatherData(newWeatherData);
+      
+      // Cache the month weather for future use
+      if (shouldFetchMonthWeather(currentYear, currentMonth)) {
+        cacheMonthWeather(currentYear, currentMonth, newWeatherData);
+        recordMonthFetchTime(currentYear, currentMonth);
+      }
     };
 
-    if (uniqueDates.length > 0) {
+    if (events.length > 0) {
       fetchWeatherForDates();
     }
   }, [events]);
@@ -91,7 +108,7 @@ export default function EventList({
 
   const getWeatherForDate = (date: string): WeatherData | null => {
     const weather = weatherData[date];
-    if (weather === "loading" || weather === "error" || !weather) {
+    if (!weather) {
       return null;
     }
     return weather as WeatherData;
