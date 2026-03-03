@@ -126,6 +126,72 @@ A full-stack family schedule management application built with Next.js, TypeScri
 - `npm run test:e2e` - Run Playwright tests
 - `npm run test:all` - Run all tests
 
+## Pre-Commit Quality Checklist - MANDATORY BEFORE GIT PUSH
+
+**ALWAYS complete these steps before committing and pushing code to GitHub:**
+
+### 1. Compile TypeScript
+```bash
+npx tsc --noEmit
+```
+**Purpose**: Verify all TypeScript code compiles without type errors
+**Must Pass**: YES - Do not push if compilation fails
+
+### 2. Run All Tests
+```bash
+npm run test:all
+```
+**Purpose**: Execute unit tests, E2E tests, and linting
+**Coverage**: 
+- Unit tests (Jest) - src/__tests__/
+- E2E tests (Playwright) - tests/e2e/
+- ESLint checks - Code quality
+
+**Must Pass**: YES - Do not push if any test fails
+
+### 3. Production Build Check
+```bash
+npm run build
+```
+**Purpose**: Verify production build succeeds (includes automatic test execution)
+**Must Pass**: YES - Do not push if build fails
+
+### 4. Manual Verification
+- [ ] No console errors in browser DevTools
+- [ ] No warnings in VS Code Problems panel
+- [ ] All modified features tested in dev server
+- [ ] Weather integration works (check 15-day limit)
+- [ ] Database queries execute correctly
+- [ ] No console.error() messages in output
+
+### Git Workflow - Required Steps
+1. Make code changes
+2. Run: `npm test:all` → All tests pass ✅
+3. Run: `npm run build` → No build errors ✅
+4. Verify: Browser console clean, no errors ✅
+5. Then commit: `git add -A && git commit -m "..."`
+6. Then push: `git push origin main`
+
+### Common Issues and Solutions
+| Issue | Solution |
+|-------|----------|
+| Test fails | Check error message, fix code, re-run `npm test:all` |
+| Build fails | Run `npm install`, verify all imports, check TypeScript errors |
+| Type errors | Run `npx tsc --noEmit` to see exact errors |
+| Weather API errors | Verify date format (YYYY-MM-DD), check coordinates |
+| Cache issues | Clear browser cache, restart dev server |
+
+### Critical Reminder
+**DO NOT PUSH CODE THAT:**
+- Has TypeScript compilation errors
+- Has failing tests
+- Fails to build
+- Has console errors in browser
+- Breaks existing features
+- Breaks weather integration
+
+**IF ANY STEP FAILS**: Fix the issue and re-run all steps before attempting to push again.
+
 ## Code Style Notes
 - TypeScript strict mode enabled
 - Prisma for all database queries
