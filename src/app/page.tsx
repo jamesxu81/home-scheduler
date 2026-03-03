@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import EventForm from "@/components/EventForm";
 import EventList from "@/components/EventList";
 import FamilyMembers from "@/components/FamilyMembers";
@@ -9,6 +9,7 @@ import { familyAPI, membersAPI, eventsAPI } from "@/lib/api";
 import { expandRecurringEvents } from "@/lib/recurring";
 import Calendar from "@/components/Calendar";
 import WeeklyCalendar from "@/components/WeeklyCalendar";
+import DailyCalendar from "@/components/DailyCalendar";
 
 export default function Home() {
   const [family, setFamily] = useState<Family | null>(null);
@@ -21,12 +22,13 @@ export default function Home() {
   const [showSetup, setShowSetup] = useState(false);
   const [familyCode, setFamilyCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
-  const [viewType, setViewType] = useState<"list" | "calendar" | "weekly">("list");
+  const [viewType, setViewType] = useState<"list" | "calendar" | "weekly" | "daily">("list");
   const [prefilledDate, setPrefilledDate] = useState<string | null>(null);
   const [prefilledTime, setPrefilledTime] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareLink, setShareLink] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   // Load family data on mount
   useEffect(() => {
@@ -148,12 +150,8 @@ export default function Home() {
         const separatorIndex = eventId.indexOf('::');
         const originalId = eventId.substring(0, separatorIndex);
         await eventsAPI.delete(originalId);
-        // Refetch events after update
-        const familyId = family?.id;
-        if (familyId) {
-          const updatedEvents = await eventsAPI.getAll(familyId);
-          setEvents(updatedEvents);
-        }
+        // Just remove from local state instead of refetching all events
+        setEvents(events.filter((e) => e.id !== originalId));
       } else {
         await eventsAPI.delete(eventId);
         setEvents(events.filter((e) => e.id !== eventId));
@@ -268,16 +266,25 @@ export default function Home() {
     }
   };
 
-  const filteredEvents = selectedMember
-    ? events.filter((e) => e.kidId === selectedMember)
-    : events;
+  const filteredEvents = useMemo(() => 
+    selectedMember
+      ? events.filter((e) => e.kidId === selectedMember)
+      : events,
+    [events, selectedMember]
+  );
 
-  const expandedEvents = expandRecurringEvents(filteredEvents);
+  const expandedEvents = useMemo(() => 
+    expandRecurringEvents(filteredEvents),
+    [filteredEvents]
+  );
 
-  const sortedEvents = [...expandedEvents].sort(
-    (a, b) =>
-      new Date(`${a.date} ${a.time}`).getTime() -
-      new Date(`${b.date} ${b.time}`).getTime()
+  const sortedEvents = useMemo(() => 
+    [...expandedEvents].sort(
+      (a, b) =>
+        new Date(`${a.date} ${a.time}`).getTime() -
+        new Date(`${b.date} ${b.time}`).getTime()
+    ),
+    [expandedEvents]
   );
 
   if (loading) {
@@ -467,12 +474,23 @@ export default function Home() {
               />
             )}
 
-            {viewType === "calendar" ? (
-              <Calendar
+            {viewType === "daily" && selectedDate ? (
+              <DailyCalendar
+                date={selectedDate}
                 events={expandedEvents}
                 members={members}
                 onEditEvent={handleEditEvent}
                 onDeleteEvent={handleDeleteEvent}
+                onBack={() => setViewType("calendar")}
+              />
+            ) : viewType === "calendar" ? (
+              <Calendar
+                events={expandedEvents}
+                members={members}
+                onDayClick={(date) => {
+                  setSelectedDate(date);
+                  setViewType("daily");
+                }}
               />
             ) : viewType === "weekly" ? (
               <WeeklyCalendar
