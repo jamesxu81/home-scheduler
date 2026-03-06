@@ -391,8 +391,8 @@ export default function EventList({
                             </div>
                           </div>
 
-                          {/* Member Avatar */}
-                          <div className="flex items-center gap-2">
+                          {/* Member Avatar + Name + Relative time */}
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
                             <div
                               className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
                               style={{ backgroundColor: getMemberColor(event.kidId) }}
@@ -403,12 +403,8 @@ export default function EventList({
                             <span className="text-gray-700 font-medium">
                               {getMemberName(event.kidId)}
                             </span>
-                          </div>
-
-                          {/* Relative time */}
-                          <div className="flex items-center gap-2 ml-auto">
                             <span className="text-lg">📆</span>
-                            <span className="text-gray-600 text-xs font-semibold">
+                            <span className="text-gray-600 text-xs font-semibold whitespace-nowrap">
                               {getRelativeTime(event.date)}
                             </span>
                           </div>

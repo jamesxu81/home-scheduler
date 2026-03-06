@@ -406,55 +406,57 @@ export default function Home() {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-              <h2 className="text-2xl font-bold text-gray-800">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">
                 {selectedMember
                   ? `Events for ${members.find((m) => m.id === selectedMember)?.name}`
                   : "All Events"}
               </h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setViewType("list")}
-                  className={`px-4 py-2 rounded-lg font-semibold transition ${
-                    viewType === "list"
-                      ? "bg-indigo-600 text-white"
-                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                  }`}
-                >
-                  📋 List
-                </button>
-                <button
-                  onClick={() => setViewType("calendar")}
-                  className={`px-4 py-2 rounded-lg font-semibold transition ${
-                    viewType === "calendar"
-                      ? "bg-indigo-600 text-white"
-                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                  }`}
-                >
-                  📅 Month
-                </button>
-                <button
-                  onClick={() => setViewType("weekly")}
-                  className={`px-4 py-2 rounded-lg font-semibold transition ${
-                    viewType === "weekly"
-                      ? "bg-indigo-600 text-white"
-                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                  }`}
-                >
-                  🗓️ Week
-                </button>
+              <div className="flex justify-between items-center gap-4 flex-wrap">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setViewType("list")}
+                    className={`px-4 py-2 rounded-lg font-semibold transition ${
+                      viewType === "list"
+                        ? "bg-indigo-600 text-white"
+                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                    }`}
+                  >
+                    📋 List
+                  </button>
+                  <button
+                    onClick={() => setViewType("calendar")}
+                    className={`px-4 py-2 rounded-lg font-semibold transition ${
+                      viewType === "calendar"
+                        ? "bg-indigo-600 text-white"
+                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                    }`}
+                  >
+                    📅 Month
+                  </button>
+                  <button
+                    onClick={() => setViewType("weekly")}
+                    className={`px-4 py-2 rounded-lg font-semibold transition ${
+                      viewType === "weekly"
+                        ? "bg-indigo-600 text-white"
+                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                    }`}
+                  >
+                    🗓️ Week
+                  </button>
+                </div>
+                {!showForm && (
+                  <button
+                    onClick={() => {
+                      setEditingEvent(null);
+                      setShowForm(true);
+                    }}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition"
+                  >
+                    + Add Event
+                  </button>
+                )}
               </div>
-              {!showForm && (
-                <button
-                  onClick={() => {
-                    setEditingEvent(null);
-                    setShowForm(true);
-                  }}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition"
-                >
-                  + Add Event
-                </button>
-              )}
             </div>
 
             {showForm && (

@@ -4,7 +4,8 @@ import { fetchWeather, WeatherData } from "@/lib/weather";
 
 const HOURS = Array.from({ length: 17 }, (_, i) => i + 6); // 6am to 10pm
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const HOUR_HEIGHT = 60; // pixels per hour
+const HOUR_HEIGHT_MOBILE = 45; // pixels per hour on mobile
+const HOUR_HEIGHT_DESKTOP = 60; // pixels per hour on desktop
 
 function getWeekStart(date: Date) {
   const day = date.getDay();
@@ -30,8 +31,11 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
 }) {
   const [currentWeek, setCurrentWeek] = useState(getWeekStart(new Date()));
   const [weatherData, setWeatherData] = useState<Record<string, WeatherData | null>>({});
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  const HOUR_HEIGHT = isMobile ? HOUR_HEIGHT_MOBILE : HOUR_HEIGHT_DESKTOP;
 
   // Get all days in current week
   const days = Array.from({ length: 7 }, (_, i) => {
@@ -40,6 +44,15 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
     d.setHours(0, 0, 0, 0);
     return d;
   });
+
+  // Handle window resize for mobile detection
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Create a stable week identifier as a string
   const weekIdentifier = useMemo(() => {
@@ -102,37 +115,40 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-4">
-      <div className="flex justify-between items-center mb-4">
-        <button onClick={() => {
-          const prevWeek = new Date(currentWeek.getFullYear(), currentWeek.getMonth(), currentWeek.getDate() - 7);
-          setCurrentWeek(getWeekStart(prevWeek));
-        }} className="px-2 py-1 bg-gray-200 rounded">Prev</button>
-        <div className="flex flex-col items-center">
-          <span className="font-bold text-lg">Week of {days[0].toLocaleDateString()} - {days[6].toLocaleDateString()}</span>
-          <button onClick={() => setCurrentWeek(getWeekStart(new Date()))} className="mt-2 px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm">Today</button>
+    <div className="bg-white rounded-lg shadow-lg p-2 md:p-4">
+      <div className="flex flex-col gap-2 mb-3 md:mb-4">
+        <div className="flex justify-between items-center gap-2">
+          <button onClick={() => {
+            const prevWeek = new Date(currentWeek.getFullYear(), currentWeek.getMonth(), currentWeek.getDate() - 7);
+            setCurrentWeek(getWeekStart(prevWeek));
+          }} className="px-2 md:px-3 py-1 bg-gray-200 rounded text-sm md:text-base">Prev</button>
+          <span className="font-bold text-sm md:text-lg text-center flex-1">{isMobile ? `${days[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${days[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : `Week of ${days[0].toLocaleDateString()} - ${days[6].toLocaleDateString()}`}</span>
+          <button onClick={() => {
+            const nextWeek = new Date(currentWeek.getFullYear(), currentWeek.getMonth(), currentWeek.getDate() + 7);
+            setCurrentWeek(getWeekStart(nextWeek));
+          }} className="px-2 md:px-3 py-1 bg-gray-200 rounded text-sm md:text-base">Next</button>
         </div>
-        <button onClick={() => {
-          const nextWeek = new Date(currentWeek.getFullYear(), currentWeek.getMonth(), currentWeek.getDate() + 7);
-          setCurrentWeek(getWeekStart(nextWeek));
-        }} className="px-2 py-1 bg-gray-200 rounded">Next</button>
+        <div className="flex justify-center">
+          <button onClick={() => setCurrentWeek(getWeekStart(new Date()))} className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs md:text-sm">Today</button>
+        </div>
       </div>
       
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto -mx-2 md:mx-0 px-2 md:px-0">
         {/* Day Headers */}
         <div className="flex">
-          <div className="w-16 border-r"></div>
-          <div className="flex flex-1">
+          <div className="w-10 md:w-16 border-r flex-shrink-0"></div>
+          <div className="flex">
             {days.map((d, i) => {
               const isToday = d.getTime() === today.getTime();
               const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
               const weather = weatherData[dateStr];
               return (
-                <div key={i} className={`flex-1 text-center font-bold py-2 border-r ${isToday ? 'bg-blue-100' : ''}`}>
-                  <div>{WEEKDAYS[i]}</div>
+                <div key={i} className={`border-r flex-1 text-center py-2 px-1 ${isToday ? 'bg-blue-100' : ''}`} style={{ minWidth: isMobile ? '60px' : '100px' }}>
+                  <div className="font-bold text-xs md:text-base">{WEEKDAYS[i]}</div>
+                  {!isMobile && <div className="text-xs text-gray-600">{d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>}
                   {weather && (
-                    <div className="flex flex-col items-center justify-center gap-1 mt-1">
-                      <span className="text-lg">{weather.icon}</span>
+                    <div className="flex flex-col items-center justify-center gap-0.5 mt-1">
+                      <span className="text-base md:text-lg">{weather.icon}</span>
                       <span className="text-xs font-semibold text-gray-700">{weather.temperature}°</span>
                     </div>
                   )}
@@ -145,27 +161,28 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
         {/* Time Grid */}
         <div className="flex border-t">
           {/* Time Column */}
-          <div className="w-16 border-r">
+          <div className="w-10 md:w-16 border-r flex-shrink-0">
             {HOURS.map(hour => (
-              <div key={hour} className="border-b" style={{ height: HOUR_HEIGHT }}>
-                <div className="text-right text-xs px-2 py-1">{hour}:00</div>
+              <div key={hour} className="border-b text-right text-xs px-1 md:px-2 py-1" style={{ height: HOUR_HEIGHT }}>
+                <div className="hidden md:block">{hour}:00</div>
+                <div className="md:hidden">{hour}</div>
               </div>
             ))}
           </div>
 
           {/* Days Grid */}
-          <div className="flex flex-1">
+          <div className="flex">
             {days.map((day, dayIdx) => {
               const isToday = day.getTime() === today.getTime();
               const eventPositions = getEventPositionsForDay(day);
               
               return (
-                <div key={dayIdx} className={`flex-1 border-r relative ${isToday ? 'bg-blue-50' : ''}`}>
+                <div key={dayIdx} className={`border-r relative ${isToday ? 'bg-blue-50' : ''}`} style={{ minWidth: isMobile ? '60px' : '100px' }}>
                   {/* Hour rows for click areas */}
                   {HOURS.map(hour => (
                     <div
                       key={hour}
-                      className="border-b hover:bg-indigo-50 cursor-pointer transition"
+                      className="border-b hover:bg-indigo-50 cursor-pointer transition text-xs text-gray-400"
                       style={{ height: HOUR_HEIGHT }}
                       onClick={() => {
                         if (onAddEvent) {
@@ -182,24 +199,24 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
                     {eventPositions.map(({ event: ev, top, height, member }) => (
                       <div
                         key={ev.id}
-                        className="absolute left-1 right-1 p-1 rounded text-white text-xs overflow-hidden cursor-pointer hover:opacity-100 hover:shadow-lg transition-all"
+                        className="absolute left-0.5 right-0.5 md:left-1 md:right-1 p-0.5 md:p-1 rounded text-white text-xs overflow-hidden cursor-pointer hover:opacity-100 hover:shadow-lg transition-all"
                         style={{
                           top: `${top}px`,
-                          height: `${Math.max(height, 30)}px`, // minimum height for visibility
+                          height: `${Math.max(height, 25)}px`, // minimum height for visibility
                           backgroundColor: member?.color || '#6366f1',
                           opacity: 0.9,
                         }}
                         title={`${ev.title} • ${ev.time || '00:00'} (${ev.duration || 30}m)`}
                         onClick={() => onEditEvent(ev)}
                       >
-                        <div className="font-semibold truncate">{ev.title}</div>
-                        <div className="text-xs flex justify-between gap-1">
+                        <div className="font-semibold truncate text-xs">{ev.title}</div>
+                        {!isMobile && <div className="text-xs flex justify-between gap-1">
                           <span>{ev.time || '00:00'}</span>
                           <span>({ev.duration || 30}m)</span>
-                        </div>
-                        <div className="flex gap-1 mt-1">
+                        </div>}
+                        <div className="flex gap-0.5 md:gap-1 mt-0.5">
                           <button
-                            className="text-white hover:text-yellow-300 flex-shrink-0"
+                            className="text-white hover:text-yellow-300 flex-shrink-0 text-xs"
                             onClick={(e) => {
                               e.stopPropagation();
                               onEditEvent(ev);
@@ -208,7 +225,7 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
                             ✏️
                           </button>
                           <button
-                            className="text-white hover:text-red-300 flex-shrink-0"
+                            className="text-white hover:text-red-300 flex-shrink-0 text-xs"
                             onClick={(e) => {
                               e.stopPropagation();
                               onDeleteEvent(ev.id);
