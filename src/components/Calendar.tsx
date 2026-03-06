@@ -103,23 +103,25 @@ export default function Calendar({ events, members, onDayClick }: {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <div className="flex justify-between items-center mb-6">
-        <button onClick={previousMonth} className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Prev</button>
-        <div className="flex flex-col items-center">
-          <h2 className="text-2xl font-bold">{MONTHS[currentMonth]} {currentYear}</h2>
-          <button onClick={() => { setCurrentMonth(today.getMonth()); setCurrentYear(today.getFullYear()); }} className="mt-2 px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm">Today</button>
+    <div className="bg-white rounded-lg shadow-lg p-3 md:p-6">
+      <div className="flex flex-col gap-3 mb-4 md:mb-6">
+        <div className="flex justify-between items-center gap-2">
+          <button onClick={previousMonth} className="px-3 md:px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm md:text-base">Prev</button>
+          <h2 className="text-xl md:text-2xl font-bold text-center flex-1">{MONTHS[currentMonth]} {currentYear}</h2>
+          <button onClick={nextMonth} className="px-3 md:px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm md:text-base">Next</button>
         </div>
-        <button onClick={nextMonth} className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Next</button>
+        <div className="flex justify-center">
+          <button onClick={() => { setCurrentMonth(today.getMonth()); setCurrentYear(today.getFullYear()); }} className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs md:text-sm">Today</button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-1 md:gap-2">
         {WEEKDAYS.map(day => (
-          <div key={day} className="text-center font-bold text-gray-600 py-2">{day}</div>
+          <div key={day} className="text-center font-bold text-gray-600 py-2 text-xs md:text-sm">{day}</div>
         ))}
         
         {Array.from({ length: firstDay }, (_, i) => (
-          <div key={`empty-${i}`} className="aspect-square bg-gray-50 rounded"></div>
+          <div key={`empty-${i}`} className="min-h-20 md:min-h-24 bg-gray-50 rounded"></div>
         ))}
 
         {days.map(day => {
@@ -131,25 +133,25 @@ export default function Calendar({ events, members, onDayClick }: {
           return (
             <div 
               key={day} 
-              className={`aspect-square border rounded p-1 overflow-y-auto cursor-pointer transition hover:shadow-lg ${isToday ? 'bg-blue-50 border-blue-300 border-2' : 'bg-white border-gray-200 hover:bg-gray-50'}`}
+              className={`min-h-20 md:min-h-24 border rounded p-2 md:p-3 overflow-y-auto cursor-pointer transition hover:shadow-lg ${isToday ? 'bg-blue-50 border-blue-300 border-2' : 'bg-white border-gray-200 hover:bg-gray-50'}`}
               onClick={() => onDayClick(dateStr)}
             >
-              <div className="flex items-start justify-between">
-                <div className={`font-semibold text-sm ${isToday ? 'text-blue-600' : 'text-gray-600'}`}>{day}</div>
+              <div className="flex items-start justify-between gap-1">
+                <div className={`font-semibold text-sm md:text-base ${isToday ? 'text-blue-600' : 'text-gray-600'}`}>{day}</div>
                 {weather && (
                   <div className="flex flex-col items-end justify-start gap-0.5">
-                    <span className="text-lg leading-none">{weather.icon}</span>
+                    <span className="text-xl md:text-2xl leading-none">{weather.icon}</span>
                     <span className="text-xs font-semibold text-gray-700">{weather.temperature}°</span>
                   </div>
                 )}
               </div>
-              <div className="space-y-1 mt-1">
+              <div className="space-y-1 mt-2">
                 {dayEvents.slice(0, 3).map(ev => {
                   const member = members.find(m => m.id === ev.kidId);
                   return (
                     <div 
                       key={ev.id} 
-                      className="text-xs p-1 rounded truncate text-white"
+                      className="text-xs md:text-sm p-1 rounded truncate text-white"
                       style={{ backgroundColor: member?.color || '#6366f1' }}
                       title={ev.title}
                     >

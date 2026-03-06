@@ -61,7 +61,7 @@ function getWeatherIcon(code: number): string {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const date = searchParams.get("date");
-  const lat = searchParams.get("lat") || "-37.7749"; // Default to Auckland
+  const lat = searchParams.get("lat") || "-36.7749"; // Default to Auckland
   const lon = searchParams.get("lon") || "174.8860";
 
   if (!date) {
