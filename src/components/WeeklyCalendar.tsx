@@ -213,26 +213,6 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
                           <span>{ev.time || '00:00'}</span>
                           <span>({ev.duration || 30}m)</span>
                         </div>}
-                        <div className="flex gap-0.5 md:gap-1 mt-0.5">
-                          <button
-                            className="text-white hover:text-yellow-300 flex-shrink-0 text-xs"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEditEvent(ev);
-                            }}
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            className="text-white hover:text-red-300 flex-shrink-0 text-xs"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onDeleteEvent(ev.id);
-                            }}
-                          >
-                            ❌
-                          </button>
-                        </div>
                       </div>
                     ))}
                   </div>
