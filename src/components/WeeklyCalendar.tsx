@@ -164,8 +164,7 @@ export default function WeeklyCalendar({ events, members, onEditEvent, onDeleteE
           <div className="w-10 md:w-16 border-r flex-shrink-0">
             {HOURS.map(hour => (
               <div key={hour} className="border-b text-right text-xs px-1 md:px-2 py-1" style={{ height: HOUR_HEIGHT }}>
-                <div className="hidden md:block">{hour}:00</div>
-                <div className="md:hidden">{hour}</div>
+                <div>{hour}:00</div>
               </div>
             ))}
           </div>
