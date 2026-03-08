@@ -124,7 +124,7 @@ describe('Recurring Events Expansion', () => {
     expect(expanded[0].id).toContain('2026-03-');
   });
 
-  it('should not include events before today', () => {
+  it('should include events before today', () => {
     const event: Event = {
       ...baseEvent,
       date: '2026-02-20',
@@ -134,8 +134,11 @@ describe('Recurring Events Expansion', () => {
 
     const expanded = expandRecurringEvents([event]);
 
-    // Should not include dates before March 1st (today)
-    expect(expanded.every((e) => new Date(e.date) >= new Date('2026-03-01'))).toBe(true);
+    // Should include dates before March 1st (today) to show past events
+    expect(expanded.some((e) => e.date === '2026-02-20')).toBe(true);
+    expect(expanded.some((e) => e.date === '2026-02-21')).toBe(true);
+    expect(expanded.some((e) => e.date === '2026-03-01')).toBe(true);
+    expect(expanded.some((e) => e.date === '2026-03-10')).toBe(true);
   });
 
   it('should handle events with no repeatUntil (unlimited recurrence)', () => {

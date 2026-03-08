@@ -38,7 +38,7 @@ export function expandRecurringEvents(events: Event[]): Event[] {
     while (currentDate <= repeatUntil && currentDate <= oneYearFromNow) {
       const shouldAdd = shouldIncludeDate(currentDate, eventDate, repeatType);
       
-      if (shouldAdd && currentDate >= today) {
+      if (shouldAdd) {
         const dateStr = formatDateLocal(currentDate);
         expanded.push({
           ...event,

@@ -121,7 +121,7 @@ export default function DailyCalendar({
                 className="border-b text-xs md:text-sm font-semibold text-gray-600 text-center flex items-center justify-center"
                 style={{ height: HOUR_HEIGHT }}
               >
-                {isMobile ? hour : `${String(hour).padStart(2, "0")}:00`}
+                {`${hour}:00`}
               </div>
             ))}
           </div>
